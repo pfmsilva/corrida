@@ -102,10 +102,14 @@ export default async function GroupHubPage({
 
   const { data: runs } = await runsQuery;
 
-  // Filtro fino por membro: cada corrida tem de ocorrer após o joined_at do próprio
-  // membro E dentro do período do desafio (starts_at já garante o DB, mas confirmed aqui).
+  // Filtro fino por membro: cada corrida tem de ocorrer dentro do período do desafio.
+  // Para membros normais, também tem de ser após o joined_at (não contam corridas anteriores
+  // à adesão). O admin/criador é excluído desse filtro — as suas corridas contam desde o
+  // starts_at do desafio, independentemente de quando criou o grupo.
+  const adminId = group.created_by as string;
   const safeRuns = (runs ?? []).filter((r) => {
-    if (joinedAtMap[r.user_id] && r.date < joinedAtMap[r.user_id]) return false;
+    const isMemberAdmin = r.user_id === adminId;
+    if (!isMemberAdmin && joinedAtMap[r.user_id] && r.date < joinedAtMap[r.user_id]) return false;
     if (challengeStart && r.date < challengeStart) return false;
     if (challengeEnd   && r.date > challengeEnd)   return false;
     return true;
