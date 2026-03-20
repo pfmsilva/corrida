@@ -82,23 +82,17 @@ export default async function GroupHubPage({
   const challengeEnd   = (challenge as GroupChallenge | null)?.ends_at   ?? null;
 
   // ── 4. Fetch runs for group members ──────────────────────────────────
-  // Date bounds are applied at DB level so nunca perdemos corridas por causa do limite.
-  // Lower bound: o mais tardio entre o joined_at de cada membro e o início do desafio.
-  // Para a query usamos o mínimo dos joined_at e o starts_at (pior caso mais antigo),
-  // o filtro fino por membro faz-se no cliente abaixo.
-  const earliestJoinedAt = Object.values(joinedAtMap).sort()[0] ?? null;
-  const dbDateFrom = [earliestJoinedAt, challengeStart]
-    .filter(Boolean)
-    .reduce<string | null>((a, b) => (!a || b! < a ? b : a), null); // mínimo
-
+  // A DB filtra apenas pelo período do desafio (se definido).
+  // O filtro joined_at por membro é feito em JS abaixo para não excluir
+  // corridas do admin que podem ser anteriores à criação do grupo.
   let runsQuery = supabase
     .from("runs")
     .select("*")
     .in("user_id", memberIds)
     .order("date", { ascending: false });
 
-  if (dbDateFrom)  runsQuery = runsQuery.gte("date", dbDateFrom);
-  if (challengeEnd) runsQuery = runsQuery.lte("date", challengeEnd);
+  if (challengeStart) runsQuery = runsQuery.gte("date", challengeStart);
+  if (challengeEnd)   runsQuery = runsQuery.lte("date", challengeEnd);
 
   const { data: runs } = await runsQuery;
 
