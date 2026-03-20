@@ -82,12 +82,12 @@ export default function ChallengeCard({ challenge, totalKm, isAdmin, groupId }: 
         </div>
       </div>
 
-      {/* Recompensa oculta */}
+      {/* Recompensa sempre visível */}
       <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
         <span className="text-xl">🏆</span>
         <div>
           <p className="text-xs text-gray-400 font-medium">Recompensa</p>
-          <p className="text-sm text-gray-700 blur-sm select-none">{challenge.reward}</p>
+          <p className="text-sm text-gray-700 font-semibold">{challenge.reward}</p>
         </div>
       </div>
     </div>
