@@ -54,8 +54,11 @@ export default async function GroupHubPage({
 
   // Map user_id → display_name for quick lookup
   const profileMap: Record<string, string> = {};
+  // Map user_id → joined_at date string (YYYY-MM-DD) for run filtering
+  const joinedAtMap: Record<string, string> = {};
   for (const m of safeMembers) {
     profileMap[m.user_id] = m.profiles?.display_name ?? m.user_id.slice(0, 8);
+    joinedAtMap[m.user_id] = m.joined_at.slice(0, 10);
   }
 
   // ── 3. Fetch group challenge ──────────────────────────────────────────
@@ -75,7 +78,10 @@ export default async function GroupHubPage({
     .order("date", { ascending: false })
     .limit(200);
 
-  const safeRuns = runs ?? [];
+  // Only keep runs made on or after the member's joined_at date
+  const safeRuns = (runs ?? []).filter(
+    (r) => !joinedAtMap[r.user_id] || r.date >= joinedAtMap[r.user_id]
+  );
 
   // ── 5. Build feed (runs + display name) ──────────────────────────────
   const feedRuns: FeedRun[] = safeRuns.slice(0, 50).map((r) => ({
