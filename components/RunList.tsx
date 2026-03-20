@@ -8,11 +8,12 @@ import type { Run, RunFormValues } from "@/types";
 interface RunListProps {
   initialRuns: Run[];
   userId: string;
+  defaultShowForm?: boolean;
 }
 
-export default function RunList({ initialRuns, userId: _userId }: RunListProps) {
+export default function RunList({ initialRuns, userId: _userId, defaultShowForm = false }: RunListProps) {
   const [runs, setRuns] = useState<Run[]>(initialRuns);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(defaultShowForm);
 
   const handleAddRun = async (values: RunFormValues) => {
     const res = await fetch("/api/runs", {

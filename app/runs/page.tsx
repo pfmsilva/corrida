@@ -5,9 +5,14 @@ import RunList from "@/components/RunList";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Run } from "@/types";
 
-export default async function RunsPage() {
+export default async function RunsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ new?: string }>;
+}) {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
+  const { new: openNew } = await searchParams;
 
   const supabase = createAdminClient();
   const { data: runs, error } = await supabase
@@ -36,7 +41,7 @@ export default async function RunsPage() {
           </div>
         </div>
 
-        <RunList initialRuns={safeRuns} userId={userId} />
+        <RunList initialRuns={safeRuns} userId={userId} defaultShowForm={openNew === "1"} />
       </main>
     </div>
   );

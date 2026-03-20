@@ -5,8 +5,9 @@ import Navbar from "@/components/Navbar";
 import StatsBar from "@/components/StatsBar";
 import ProgressChart from "@/components/ProgressChart";
 import RunInsights from "@/components/RunInsights";
+import DashboardChallenges from "@/components/dashboard/DashboardChallenges";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Run } from "@/types";
+import type { Run, GroupChallenge } from "@/types";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -20,15 +21,84 @@ export default async function DashboardPage() {
   const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
 
   const supabase = createAdminClient();
-  const { data: runs, error } = await supabase
+
+  // ── Fetch user's runs ──────────────────────────────────────────────────
+  const { data: runs } = await supabase
     .from("runs")
     .select("*")
     .eq("user_id", userId)
     .order("date", { ascending: false });
 
-  if (error) console.error("Error fetching runs:", error.message);
-
   const safeRuns: Run[] = runs ?? [];
+
+  // ── Fetch groups + challenges the user belongs to ──────────────────────
+  const { data: memberships } = await supabase
+    .from("group_members")
+    .select("group_id, joined_at, groups(id, name, created_by, group_challenges(*))")
+    .eq("user_id", userId);
+
+  // For each group that has a challenge, compute total km by all members
+  type RawGroup = {
+    id: string;
+    name: string;
+    created_by: string;
+    group_challenges: GroupChallenge[] | GroupChallenge | null;
+  };
+
+  const groupsWithChallenges = (memberships ?? [])
+    .map((m) => {
+      const g = m.groups as unknown as RawGroup | null;
+      if (!g) return null;
+      const challenge = Array.isArray(g.group_challenges)
+        ? (g.group_challenges[0] ?? null)
+        : (g.group_challenges ?? null);
+      if (!challenge) return null;
+      return { group: g, challenge: challenge as GroupChallenge, joinedAt: m.joined_at as string };
+    })
+    .filter(Boolean) as { group: RawGroup; challenge: GroupChallenge; joinedAt: string }[];
+
+  // Fetch all member IDs and runs for each group in parallel
+  const challengeStatuses = await Promise.all(
+    groupsWithChallenges.map(async ({ group, challenge, joinedAt }) => {
+      // Get all members of this group
+      const { data: members } = await supabase
+        .from("group_members")
+        .select("user_id, joined_at")
+        .eq("group_id", group.id);
+
+      const memberIds = (members ?? []).map((m) => m.user_id as string);
+      const joinedAtMap: Record<string, string> = {};
+      for (const m of members ?? []) {
+        joinedAtMap[m.user_id as string] = (m.joined_at as string).slice(0, 10);
+      }
+
+      // Build run query with challenge date bounds
+      let q = supabase
+        .from("runs")
+        .select("user_id, distance_km, date")
+        .in("user_id", memberIds);
+      if (challenge.starts_at) q = q.gte("date", challenge.starts_at);
+      if (challenge.ends_at)   q = q.lte("date", challenge.ends_at);
+
+      const { data: groupRuns } = await q;
+
+      const totalKm = (groupRuns ?? [])
+        .filter((r) => {
+          const isAdmin = r.user_id === group.created_by;
+          if (!isAdmin && joinedAtMap[r.user_id] && r.date < joinedAtMap[r.user_id]) return false;
+          return true;
+        })
+        .reduce((sum, r) => sum + Number(r.distance_km), 0);
+
+      return {
+        groupId: group.id,
+        groupName: group.name,
+        challenge,
+        totalKm,
+        joinedAt,
+      };
+    })
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,7 +125,7 @@ export default async function DashboardPage() {
                   : `${safeRuns.length} corrida${safeRuns.length === 1 ? "" : "s"} registada${safeRuns.length === 1 ? "" : "s"}. Continua assim!`}
               </p>
             </div>
-            <Link href="/runs"
+            <Link href="/runs?new=1"
               className="shrink-0 bg-white text-brand-600 font-bold text-sm
                          px-4 py-2.5 rounded-xl hover:bg-brand-50 transition-all
                          duration-200 shadow-sm whitespace-nowrap">
@@ -68,6 +138,17 @@ export default async function DashboardPage() {
         <section>
           <p className="section-title">Estatísticas</p>
           <StatsBar runs={safeRuns} />
+        </section>
+
+        {/* ── Group challenges ── */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <p className="section-title mb-0">Desafios de grupo</p>
+            <Link href="/groups" className="text-xs font-semibold text-brand-600 hover:underline">
+              Ver grupos →
+            </Link>
+          </div>
+          <DashboardChallenges challenges={challengeStatuses} />
         </section>
 
         {/* ── Chart + Insights side by side on lg ── */}
