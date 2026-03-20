@@ -40,7 +40,7 @@ export default function RunForm({ onSubmit, onCancel }: RunFormProps) {
     try {
       await onSubmit(values);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(err instanceof Error ? err.message : "Ocorreu um erro.");
     } finally {
       setLoading(false);
     }
@@ -51,12 +51,12 @@ export default function RunForm({ onSubmit, onCancel }: RunFormProps) {
       onSubmit={handleSubmit}
       className="card border-brand-200 space-y-4 mb-4"
     >
-      <h3 className="font-semibold text-gray-800">Log a new run</h3>
+      <h3 className="font-semibold text-gray-800">Registar nova corrida</h3>
 
       {/* Date */}
       <div>
         <label htmlFor="date" className="label">
-          Date
+          Data
         </label>
         <input
           id="date"
@@ -74,7 +74,7 @@ export default function RunForm({ onSubmit, onCancel }: RunFormProps) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label htmlFor="distance_km" className="label">
-            Distance (km)
+            Distância (km)
           </label>
           <input
             id="distance_km"
@@ -91,7 +91,7 @@ export default function RunForm({ onSubmit, onCancel }: RunFormProps) {
         </div>
         <div>
           <label htmlFor="duration_min" className="label">
-            Duration (min)
+            Duração (min)
           </label>
           <input
             id="duration_min"
@@ -111,21 +111,21 @@ export default function RunForm({ onSubmit, onCancel }: RunFormProps) {
       {/* Live pace preview */}
       {livePace !== null && (
         <p className="text-sm text-center text-accent-500 font-semibold bg-orange-50 rounded-lg py-2">
-          Pace: {formatPace(livePace)}
+          Ritmo: {formatPace(livePace)}
         </p>
       )}
 
       {/* Notes */}
       <div>
         <label htmlFor="notes" className="label">
-          Notes{" "}
-          <span className="font-normal text-gray-400">(optional)</span>
+          Notas{" "}
+          <span className="font-normal text-gray-400">(opcional)</span>
         </label>
         <textarea
           id="notes"
           name="notes"
           rows={2}
-          placeholder="How did it feel? Any highlights?"
+          placeholder="Como correu? Algum destaque?"
           value={values.notes}
           onChange={handleChange}
           className="input resize-none"
@@ -141,10 +141,10 @@ export default function RunForm({ onSubmit, onCancel }: RunFormProps) {
       {/* Action buttons */}
       <div className="flex gap-3">
         <button type="submit" disabled={loading} className="btn-primary flex-1">
-          {loading ? "Saving…" : "Save run"}
+          {loading ? "A guardar…" : "Guardar corrida"}
         </button>
         <button type="button" onClick={onCancel} className="btn-ghost">
-          Cancel
+          Cancelar
         </button>
       </div>
     </form>

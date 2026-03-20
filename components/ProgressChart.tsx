@@ -1,17 +1,17 @@
 "use client";
-// ProgressChart — a line chart showing distance per run over time.
-// Built with Recharts, which is a React wrapper around D3.
-// We show two lines: distance and pace, each on its own Y-axis.
+// ProgressChart — interactive area chart for the dashboard.
+// The user can toggle between Distance (km) and Pace (min/km) views.
+// Built with Recharts: AreaChart gives a nicer filled look than a plain line.
 
+import { useState } from "react";
 import {
   ResponsiveContainer,
-  ComposedChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
 } from "recharts";
 import { formatPace } from "@/lib/utils";
 import type { Run } from "@/types";
@@ -20,112 +20,135 @@ interface ProgressChartProps {
   runs: Run[];
 }
 
+// Which metric is currently shown
+type Metric = "distance" | "pace";
+
 export default function ProgressChart({ runs }: ProgressChartProps) {
-  // Chart data needs to be ordered oldest → newest
+  const [metric, setMetric] = useState<Metric>("distance");
+
+  // Sort oldest → newest for the X axis to read left-to-right chronologically
   const data = [...runs]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((run) => ({
-      // Short date label for the X axis
-      date: new Date(`${run.date}T00:00`).toLocaleDateString("en-US", {
+      date: new Date(`${run.date}T00:00`).toLocaleDateString("pt-PT", {
         month: "short",
         day: "numeric",
       }),
-      distance: run.distance_km,
-      pace: run.pace_min_per_km,
+      distance: Number(run.distance_km),
+      pace: Number(run.pace_min_per_km),
     }));
 
-  // Custom tooltip so we can show a formatted pace string
+  // Visual config changes depending on the selected metric
+  const config = {
+    distance: {
+      dataKey: "distance",
+      color: "#6366f1",   // indigo
+      gradientId: "gradDist",
+      unit: " km",
+      label: "Distance",
+    },
+    pace: {
+      dataKey: "pace",
+      color: "#f97316",   // orange
+      gradientId: "gradPace",
+      unit: " min/km",
+      label: "Pace",
+    },
+  }[metric];
+
+  // Custom tooltip — shows a nicely formatted value
   const CustomTooltip = ({
     active,
     payload,
     label,
   }: {
     active?: boolean;
-    payload?: Array<{ name: string; value: number; color: string }>;
+    payload?: Array<{ value: number }>;
     label?: string;
   }) => {
     if (!active || !payload?.length) return null;
+    const val = payload[0].value;
     return (
-      <div className="bg-white border border-gray-100 rounded-xl shadow-md p-3 text-sm">
-        <p className="font-semibold text-gray-700 mb-1">{label}</p>
-        {payload.map((entry) => (
-          <p key={entry.name} style={{ color: entry.color }}>
-            {entry.name === "pace"
-              ? `Pace: ${formatPace(entry.value)}`
-              : `Distance: ${entry.value} km`}
-          </p>
-        ))}
+      <div className="bg-white border border-gray-100 rounded-xl shadow-lg px-4 py-3 text-sm">
+        <p className="font-semibold text-gray-600 mb-1">{label}</p>
+        <p className="font-bold" style={{ color: config.color }}>
+          {metric === "pace" ? formatPace(val) : `${val} km`}
+        </p>
       </div>
     );
   };
 
+  // For pace, a lower value is better — we invert the Y domain so the chart
+  // goes "up" when the runner is getting faster (lower pace).
+  const yDomain: [string | number, string | number] =
+    metric === "pace" ? ["dataMax + 0.5", "dataMin - 0.5"] : ["auto", "auto"];
+
   return (
-    // ResponsiveContainer fills whatever width its parent gives it
-    <ResponsiveContainer width="100%" height={220}>
-      <ComposedChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+    <div>
+      {/* Metric toggle */}
+      <div className="flex gap-2 mb-4">
+        {(["distance", "pace"] as Metric[]).map((m) => (
+          <button
+            key={m}
+            onClick={() => setMetric(m)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              metric === m
+                ? "bg-brand-600 text-white"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+            }`}
+          >
+            {m === "distance" ? "📏 Distância" : "⚡ Ritmo"}
+          </button>
+        ))}
+      </div>
 
-        {/* X axis: run dates */}
-        <XAxis
-          dataKey="date"
-          tick={{ fontSize: 11, fill: "#9ca3af" }}
-          tickLine={false}
-          axisLine={false}
-        />
+      <ResponsiveContainer width="100%" height={220}>
+        <AreaChart
+          data={data}
+          margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+        >
+          {/* SVG gradient fill definition */}
+          <defs>
+            <linearGradient id={config.gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={config.color} stopOpacity={0.2} />
+              <stop offset="95%" stopColor={config.color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
 
-        {/* Left Y axis: distance in km */}
-        <YAxis
-          yAxisId="left"
-          tick={{ fontSize: 11, fill: "#9ca3af" }}
-          tickLine={false}
-          axisLine={false}
-          unit=" km"
-          width={48}
-        />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
 
-        {/* Right Y axis: pace in min/km (inverted — lower is better) */}
-        <YAxis
-          yAxisId="right"
-          orientation="right"
-          tick={{ fontSize: 11, fill: "#9ca3af" }}
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={(v) => `${Math.floor(v)}m`}
-          width={36}
-        />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 11, fill: "#9ca3af" }}
+            tickLine={false}
+            axisLine={false}
+          />
 
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          iconType="circle"
-          iconSize={8}
-          wrapperStyle={{ fontSize: 12 }}
-        />
+          <YAxis
+            domain={yDomain}
+            tick={{ fontSize: 11, fill: "#9ca3af" }}
+            tickLine={false}
+            axisLine={false}
+            // For pace, format ticks as "Xm"; for distance, append "km"
+            tickFormatter={(v) =>
+              metric === "pace" ? `${Math.floor(v)}m` : `${v}km`
+            }
+            width={44}
+          />
 
-        {/* Distance line — indigo */}
-        <Line
-          yAxisId="left"
-          type="monotone"
-          dataKey="distance"
-          name="distance"
-          stroke="#6366f1"
-          strokeWidth={2}
-          dot={{ r: 4, fill: "#6366f1" }}
-          activeDot={{ r: 6 }}
-        />
+          <Tooltip content={<CustomTooltip />} />
 
-        {/* Pace line — orange */}
-        <Line
-          yAxisId="right"
-          type="monotone"
-          dataKey="pace"
-          name="pace"
-          stroke="#f97316"
-          strokeWidth={2}
-          dot={{ r: 4, fill: "#f97316" }}
-          activeDot={{ r: 6 }}
-          strokeDasharray="5 3"
-        />
-      </ComposedChart>
-    </ResponsiveContainer>
+          <Area
+            type="monotone"
+            dataKey={config.dataKey}
+            stroke={config.color}
+            strokeWidth={2.5}
+            fill={`url(#${config.gradientId})`}
+            dot={{ r: 4, fill: config.color, strokeWidth: 0 }}
+            activeDot={{ r: 6, strokeWidth: 0 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

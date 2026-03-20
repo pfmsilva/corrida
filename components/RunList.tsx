@@ -63,7 +63,7 @@ export default function RunList({ initialRuns, userId }: RunListProps) {
           onClick={() => setShowForm(true)}
           className="btn-primary w-full mb-4"
         >
-          + Log a run
+          + Registar corrida
         </button>
       )}
 
@@ -71,7 +71,7 @@ export default function RunList({ initialRuns, userId }: RunListProps) {
       {runs.length === 0 ? (
         <div className="card text-center py-10 text-gray-400">
           <p className="text-3xl mb-2">👟</p>
-          <p className="text-sm">No runs yet — log your first one!</p>
+          <p className="text-sm">Ainda sem corridas — regista a primeira!</p>
         </div>
       ) : (
         <div className="space-y-3">

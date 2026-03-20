@@ -10,19 +10,19 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <span className="text-4xl">🏃</span>
           <h1 className="mt-3 text-2xl font-bold text-gray-900">Corrida</h1>
-          <p className="mt-1 text-sm text-gray-500">Sign in to your account</p>
+          <p className="mt-1 text-sm text-gray-500">Inicia sessão na tua conta</p>
         </div>
 
         {/* The form handles its own state and Supabase calls */}
         <AuthForm mode="login" />
 
         <p className="mt-6 text-center text-sm text-gray-500">
-          Don&apos;t have an account?{" "}
+          Ainda não tens conta?{" "}
           <Link
             href="/signup"
             className="font-medium text-brand-600 hover:text-brand-700"
           >
-            Sign up
+            Regista-te
           </Link>
         </p>
       </div>

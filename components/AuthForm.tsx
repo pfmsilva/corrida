@@ -41,7 +41,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         setError(error.message);
       } else {
         setSuccessMsg(
-          "Account created! Check your email and click the confirmation link."
+          "Conta criada! Verifica o teu e-mail e clica no link de confirmação."
         );
       }
     } else {
@@ -68,7 +68,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {/* Email */}
       <div>
         <label htmlFor="email" className="label">
-          Email
+          E-mail
         </label>
         <input
           id="email"
@@ -85,7 +85,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {/* Password */}
       <div>
         <label htmlFor="password" className="label">
-          Password
+          Palavra-passe
         </label>
         <input
           id="password"
@@ -99,7 +99,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           className="input"
         />
         {mode === "signup" && (
-          <p className="mt-1 text-xs text-gray-400">Minimum 6 characters</p>
+          <p className="mt-1 text-xs text-gray-400">Mínimo 6 caracteres</p>
         )}
       </div>
 
@@ -119,10 +119,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
       <button type="submit" disabled={loading} className="btn-primary w-full">
         {loading
-          ? "Please wait…"
+          ? "A aguardar…"
           : mode === "login"
-          ? "Sign in"
-          : "Create account"}
+          ? "Iniciar sessão"
+          : "Criar conta"}
       </button>
     </form>
   );

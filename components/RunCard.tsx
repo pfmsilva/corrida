@@ -18,7 +18,7 @@ export default function RunCard({ run, onDelete }: RunCardProps) {
         </span>
         <button
           onClick={() => onDelete(run.id)}
-          aria-label="Delete run"
+          aria-label="Eliminar corrida"
           className="text-gray-300 hover:text-red-400 transition-colors text-lg leading-none"
         >
           ✕
@@ -27,9 +27,9 @@ export default function RunCard({ run, onDelete }: RunCardProps) {
 
       {/* Metrics row */}
       <div className="grid grid-cols-3 gap-2 text-center">
-        <Metric label="Distance" value={`${run.distance_km} km`} />
-        <Metric label="Duration" value={formatDuration(run.duration_min)} />
-        <Metric label="Pace" value={formatPace(run.pace_min_per_km)} highlight />
+        <Metric label="Distância" value={`${run.distance_km} km`} />
+        <Metric label="Duração" value={formatDuration(run.duration_min)} />
+        <Metric label="Ritmo" value={formatPace(run.pace_min_per_km)} highlight />
       </div>
 
       {/* Optional notes */}

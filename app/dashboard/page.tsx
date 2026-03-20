@@ -1,19 +1,18 @@
 // Dashboard — the main protected page.
-// This is a Server Component: it fetches the user's runs server-side
-// and passes them down to Client Components for interactivity.
+// Server Component: fetches runs server-side, passes to Client Components.
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import StatsBar from "@/components/StatsBar";
 import RunList from "@/components/RunList";
 import ProgressChart from "@/components/ProgressChart";
+import RunInsights from "@/components/RunInsights";
 import type { Run } from "@/types";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  // Verify the user is authenticated (middleware already guards this,
-  // but we also need the user object to scope our DB query)
+  // Verify auth — middleware guards the route, but we need the user for DB queries
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -27,25 +26,41 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .order("date", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching runs:", error.message);
-  }
+  if (error) console.error("Error fetching runs:", error.message);
 
   const safeRuns: Run[] = runs ?? [];
+
+  // Derive first-name from email (e.g. "paulo@..." → "Paulo") for the greeting
+  const firstName =
+    user.email?.split("@")[0].split(".")[0] ?? "runner";
+  const displayName =
+    firstName.charAt(0).toUpperCase() + firstName.slice(1);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar userEmail={user.email ?? ""} />
 
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-        {/* Summary statistics */}
+        {/* ── Welcome header ── */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Olá, {displayName} 👋
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {safeRuns.length === 0
+              ? "Regista a tua primeira corrida para começar."
+              : `Tens ${safeRuns.length} corrida${safeRuns.length === 1 ? "" : "s"} registada${safeRuns.length === 1 ? "" : "s"}. Continua assim!`}
+          </p>
+        </div>
+
+        {/* ── Metric cards ── */}
         <StatsBar runs={safeRuns} />
 
-        {/* Progress chart — only shown when there are at least 2 runs */}
-        {safeRuns.length >= 2 && (
+        {/* ── Progress chart — shown as soon as there is at least 1 run ── */}
+        {safeRuns.length >= 1 && (
           <section>
             <h2 className="text-base font-semibold text-gray-700 mb-3">
-              Progress over time
+              Evolução ao longo do tempo
             </h2>
             <div className="card">
               <ProgressChart runs={safeRuns} />
@@ -53,12 +68,21 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* Run list with the inline "Add run" form */}
+        {/* ── AI insights — shown when there is at least 1 run ── */}
+        {safeRuns.length >= 1 && (
+          <section>
+            <h2 className="text-base font-semibold text-gray-700 mb-3">
+              Análise do treinador
+            </h2>
+            <RunInsights runs={safeRuns} />
+          </section>
+        )}
+
+        {/* ── Run list with inline "Add run" form ── */}
         <section>
           <h2 className="text-base font-semibold text-gray-700 mb-3">
-            Your runs
+            As tuas corridas
           </h2>
-          {/* RunList is a Client Component so it can manage the form + optimistic updates */}
           <RunList initialRuns={safeRuns} userId={user.id} />
         </section>
       </main>

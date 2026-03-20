@@ -10,18 +10,18 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <span className="text-4xl">🏃</span>
           <h1 className="mt-3 text-2xl font-bold text-gray-900">Corrida</h1>
-          <p className="mt-1 text-sm text-gray-500">Create your free account</p>
+          <p className="mt-1 text-sm text-gray-500">Cria a tua conta gratuita</p>
         </div>
 
         <AuthForm mode="signup" />
 
         <p className="mt-6 text-center text-sm text-gray-500">
-          Already have an account?{" "}
+          Já tens conta?{" "}
           <Link
             href="/login"
             className="font-medium text-brand-600 hover:text-brand-700"
           >
-            Sign in
+            Inicia sessão
           </Link>
         </p>
       </div>

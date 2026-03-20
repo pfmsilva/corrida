@@ -7,8 +7,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Corrida — Running Tracker",
-  description: "Log your runs, track your pace, and watch your progress.",
+  title: "Corrida — Registo de Corridas",
+  description: "Regista as tuas corridas, acompanha o ritmo e observa a tua evolução.",
 };
 
 export default function RootLayout({
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="pt">
       <body className={`${inter.className} bg-gray-50 min-h-screen`}>
         {children}
       </body>
