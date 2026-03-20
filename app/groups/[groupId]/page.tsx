@@ -78,10 +78,18 @@ export default async function GroupHubPage({
     .order("date", { ascending: false })
     .limit(200);
 
-  // Only keep runs made on or after the member's joined_at date
-  const safeRuns = (runs ?? []).filter(
-    (r) => !joinedAtMap[r.user_id] || r.date >= joinedAtMap[r.user_id]
-  );
+  // Only keep runs within the challenge date window AND after the member's joined_at date
+  const challengeStart = (challenge as GroupChallenge | null)?.starts_at ?? null;
+  const challengeEnd   = (challenge as GroupChallenge | null)?.ends_at   ?? null;
+
+  const safeRuns = (runs ?? []).filter((r) => {
+    const minDate = [joinedAtMap[r.user_id], challengeStart]
+      .filter(Boolean)
+      .reduce<string | null>((a, b) => (!a || b! > a ? b : a), null);
+    if (minDate && r.date < minDate) return false;
+    if (challengeEnd && r.date > challengeEnd) return false;
+    return true;
+  });
 
   // ── 5. Build feed (runs + display name) ──────────────────────────────
   const feedRuns: FeedRun[] = safeRuns.slice(0, 50).map((r) => ({

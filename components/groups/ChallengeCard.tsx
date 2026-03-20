@@ -55,6 +55,9 @@ export default function ChallengeCard({ challenge, totalKm, isAdmin, groupId }: 
     );
   }
 
+  const fmt = (d: string) =>
+    new Date(d + "T00:00:00").toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
+
   return (
     <div className="card space-y-4">
       <div className="flex items-center justify-between">
@@ -66,6 +69,16 @@ export default function ChallengeCard({ challenge, totalKm, isAdmin, groupId }: 
         </div>
         <span className="text-2xl font-black text-brand-600">{progressPct.toFixed(0)}%</span>
       </div>
+
+      {(challenge.starts_at || challenge.ends_at) && (
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span>📅</span>
+          {challenge.starts_at && <span>{fmt(challenge.starts_at)}</span>}
+          {challenge.starts_at && challenge.ends_at && <span>→</span>}
+          {challenge.ends_at && <span>{fmt(challenge.ends_at)}</span>}
+          {!challenge.starts_at && challenge.ends_at && <span>Até {fmt(challenge.ends_at)}</span>}
+        </div>
+      )}
 
       {/* Barra de progresso com gradiente */}
       <div>

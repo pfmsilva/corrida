@@ -54,6 +54,8 @@ export interface GroupChallenge {
   group_id: string;
   target_km: number;
   reward: string;
+  starts_at: string | null; // ISO date "YYYY-MM-DD"
+  ends_at: string | null;   // ISO date "YYYY-MM-DD"
   updated_at: string;
 }
 

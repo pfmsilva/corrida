@@ -13,6 +13,8 @@ export default function AdminPanel({ groupId, challenge }: AdminPanelProps) {
   const router = useRouter();
   const [targetKm, setTargetKm] = useState(challenge ? String(challenge.target_km) : "");
   const [reward, setReward] = useState(challenge?.reward ?? "");
+  const [startsAt, setStartsAt] = useState(challenge?.starts_at ?? "");
+  const [endsAt, setEndsAt] = useState(challenge?.ends_at ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -26,7 +28,12 @@ export default function AdminPanel({ groupId, challenge }: AdminPanelProps) {
     const res = await fetch(`/api/groups/${groupId}/challenge`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target_km: parseFloat(targetKm), reward }),
+      body: JSON.stringify({
+        target_km: parseFloat(targetKm),
+        reward,
+        starts_at: startsAt || null,
+        ends_at: endsAt || null,
+      }),
     });
 
     const data = await res.json();
@@ -74,6 +81,29 @@ export default function AdminPanel({ groupId, challenge }: AdminPanelProps) {
             Os membros não verão isto até o objetivo ser atingido.
           </p>
         </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="starts-at" className="label">Data de início</label>
+            <input
+              id="starts-at" type="date"
+              value={startsAt} onChange={(e) => setStartsAt(e.target.value)}
+              className="input"
+            />
+          </div>
+          <div>
+            <label htmlFor="ends-at" className="label">Data de fim</label>
+            <input
+              id="ends-at" type="date"
+              min={startsAt || undefined}
+              value={endsAt} onChange={(e) => setEndsAt(e.target.value)}
+              className="input"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 -mt-2">
+          Só as corridas dentro deste período contam para o desafio. Deixa em branco para sem limite.
+        </p>
 
         {error && (
           <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>
