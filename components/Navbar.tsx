@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser, UserButton } from "@clerk/nextjs";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -46,7 +47,7 @@ export default function Navbar() {
         </div>
 
         {/* User */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {userEmail && (
             <div className="hidden sm:flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-1.5">
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-indigo-500
@@ -56,6 +57,7 @@ export default function Navbar() {
               <span className="text-xs text-gray-500 truncate max-w-[140px]">{userEmail}</span>
             </div>
           )}
+          <NotificationBell />
           <UserButton />
         </div>
 

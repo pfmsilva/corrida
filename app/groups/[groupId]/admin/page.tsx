@@ -3,8 +3,10 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import AdminPanel from "@/components/groups/AdminPanel";
+import InviteUserForm from "@/components/groups/InviteUserForm";
+import GroupInvitationsAdmin from "@/components/groups/GroupInvitationsAdmin";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { GroupChallenge } from "@/types";
+import type { GroupChallenge, GroupInvitation } from "@/types";
 
 export default async function AdminPage({
   params,
@@ -25,25 +27,22 @@ export default async function AdminPage({
     .single();
 
   if (!group) notFound();
+  if (group.created_by !== userId) redirect(`/groups/${groupId}`);
 
-  if (group.created_by !== userId) {
-    redirect(`/groups/${groupId}`);
-  }
-
-  const { data: challenge } = await supabase
-    .from("group_challenges")
-    .select("*")
-    .eq("group_id", groupId)
-    .maybeSingle();
+  const [{ data: challenge }, { data: invitations }] = await Promise.all([
+    supabase.from("group_challenges").select("*").eq("group_id", groupId).maybeSingle(),
+    supabase.from("group_invitations").select("*")
+      .eq("group_id", groupId).order("created_at", { ascending: false }),
+  ]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         <Link
           href={`/groups/${groupId}`}
-          className="text-sm text-gray-400 hover:text-brand-600 mb-5 inline-flex
+          className="text-sm text-gray-400 hover:text-brand-600 inline-flex
                      items-center gap-1 font-medium transition-colors"
         >
           ← Voltar a {group.name}
@@ -54,10 +53,13 @@ export default async function AdminPage({
           <p className="page-subtitle">{group.name}</p>
         </div>
 
-        <AdminPanel
-          groupId={groupId}
-          challenge={challenge as GroupChallenge | null}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <div className="space-y-6">
+            <AdminPanel groupId={groupId} challenge={challenge as GroupChallenge | null} />
+            <InviteUserForm groupId={groupId} />
+          </div>
+          <GroupInvitationsAdmin invitations={(invitations ?? []) as GroupInvitation[]} />
+        </div>
       </main>
     </div>
   );

@@ -64,6 +64,26 @@ export interface FeedRun extends Run {
   display_name: string;
 }
 
+/** Invitation to join a group */
+export interface GroupInvitation {
+  id: string;
+  group_id: string;
+  invited_user_id: string;
+  invited_by: string;
+  invited_user_name: string;
+  group_name: string;
+  status: "pending" | "accepted" | "declined";
+  created_at: string;
+  updated_at: string;
+}
+
+/** User result from search */
+export interface UserSearchResult {
+  id: string;
+  display_name: string;
+  email: string;
+}
+
 /** Leaderboard row — member ranked by total distance */
 export interface LeaderboardEntry {
   user_id: string;
