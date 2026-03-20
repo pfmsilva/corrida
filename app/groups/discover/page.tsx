@@ -46,14 +46,14 @@ export default async function DiscoverPage() {
         <div className="flex items-center gap-3">
           <Link href="/groups"
             className="text-sm text-gray-400 hover:text-brand-600 font-medium transition-colors">
-            ← Grupos
+            ← Desafios
           </Link>
         </div>
 
         <div className="page-header">
-          <h1 className="page-title">🌍 Descobrir grupos</h1>
+          <h1 className="page-title">🌍 Descobrir desafios</h1>
           <p className="page-subtitle">
-            Explora grupos públicos e pede adesão — o administrador irá confirmar.
+            Explora desafios públicos e pede adesão — o administrador irá confirmar.
           </p>
         </div>
 

@@ -66,11 +66,11 @@ export default function AdminPanel({ groupId, challenge, isPublic: initialIsPubl
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="font-semibold text-gray-900 text-sm">Grupo público</p>
+          <p className="font-semibold text-gray-900 text-sm">Desafio público</p>
           <p className="text-xs text-gray-400 mt-0.5">
             {isPublic
               ? "Qualquer utilizador pode encontrar e pedir adesão."
-              : "Só é possível entrar com o ID do grupo."}
+              : "Só é possível entrar com o ID do desafio."}
           </p>
         </div>
         <button

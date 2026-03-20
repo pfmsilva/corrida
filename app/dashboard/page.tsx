@@ -143,9 +143,9 @@ export default async function DashboardPage() {
         {/* ── Group challenges ── */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <p className="section-title mb-0">Desafios de grupo</p>
+            <p className="section-title mb-0">Os teus desafios</p>
             <Link href="/groups" className="text-xs font-semibold text-brand-600 hover:underline">
-              Ver grupos →
+              Ver desafios →
             </Link>
           </div>
           <DashboardChallenges challenges={challengeStatuses} />

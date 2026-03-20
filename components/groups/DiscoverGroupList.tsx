@@ -44,7 +44,7 @@ export default function DiscoverGroupList({ groups }: { groups: PublicGroup[] })
     <div className="space-y-4">
       <input
         type="text"
-        placeholder="Pesquisar grupos…"
+        placeholder="Pesquisar desafios…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="input max-w-sm"
@@ -57,7 +57,7 @@ export default function DiscoverGroupList({ groups }: { groups: PublicGroup[] })
       {filtered.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
           <p className="text-4xl mb-3">🔍</p>
-          <p className="font-semibold text-gray-700">Nenhum grupo público encontrado</p>
+          <p className="font-semibold text-gray-700">Nenhum desafio público encontrado</p>
           <p className="text-sm text-gray-400 mt-1">Tenta outro termo de pesquisa.</p>
         </div>
       ) : (

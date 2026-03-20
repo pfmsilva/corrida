@@ -16,7 +16,7 @@ const FEATURES = [
   {
     icon: "👥",
     title: "Desafios em grupo",
-    desc: "Cria grupos com amigos, define objetivos coletivos e celebra juntos.",
+    desc: "Cria desafios com amigos, define objetivos coletivos e celebra juntos.",
   },
   {
     icon: "✨",

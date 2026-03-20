@@ -16,7 +16,7 @@ export default function ChallengeCard({ challenge, totalKm, isAdmin, groupId }: 
       <div className="rounded-2xl border-2 border-dashed border-gray-200 py-12 text-center">
         <p className="text-4xl mb-3">🎯</p>
         <p className="font-semibold text-gray-700">Ainda não há desafio</p>
-        <p className="text-sm text-gray-400 mt-1 mb-4">Define um objetivo para o grupo</p>
+        <p className="text-sm text-gray-400 mt-1 mb-4">Define um objetivo para o desafio</p>
         {isAdmin && (
           <Link href={`/groups/${groupId}/admin`} className="btn-primary text-sm">
             Definir desafio

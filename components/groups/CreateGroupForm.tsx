@@ -33,11 +33,11 @@ export default function CreateGroupForm({ onSuccess, onCancel }: CreateGroupForm
   return (
     <div className="bg-white rounded-2xl border border-brand-100 shadow-sm overflow-hidden">
       <div className="bg-gradient-to-r from-brand-600 to-indigo-500 px-5 py-3">
-        <h3 className="font-bold text-white text-sm">Novo grupo</h3>
+        <h3 className="font-bold text-white text-sm">Novo desafio</h3>
       </div>
       <form onSubmit={handleSubmit} className="p-5 space-y-4">
         <div>
-          <label htmlFor="group-name" className="label">Nome do grupo</label>
+          <label htmlFor="group-name" className="label">Nome do desafio</label>
           <input
             id="group-name" type="text" required
             value={name} onChange={(e) => setName(e.target.value)}
@@ -48,7 +48,7 @@ export default function CreateGroupForm({ onSuccess, onCancel }: CreateGroupForm
         {error && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
         <div className="flex gap-3">
           <button type="submit" disabled={loading} className="btn-primary flex-1">
-            {loading ? "A criar…" : "Criar grupo"}
+            {loading ? "A criar…" : "Criar desafio"}
           </button>
           <button type="button" onClick={onCancel} className="btn-ghost">Cancelar</button>
         </div>

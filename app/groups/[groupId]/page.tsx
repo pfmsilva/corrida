@@ -153,7 +153,7 @@ export default async function GroupHubPage({
             <Link href="/groups"
               className="text-indigo-200 hover:text-white text-xs font-medium
                          transition-colors mb-3 inline-flex items-center gap-1">
-              ← Todos os grupos
+              ← Todos os desafios
             </Link>
             <div className="flex items-start justify-between gap-4 mt-1">
               <div>
@@ -200,7 +200,7 @@ export default async function GroupHubPage({
         {/* ── Challenge + Leaderboard side by side on lg ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section>
-            <p className="section-title">Desafio do grupo</p>
+            <p className="section-title">Desafio</p>
             <ChallengeCard
               challenge={challenge as GroupChallenge | null}
               totalKm={totalGroupKm}
@@ -217,7 +217,7 @@ export default async function GroupHubPage({
 
         {/* ── Group feed ── */}
         <section>
-          <p className="section-title">Feed do grupo</p>
+          <p className="section-title">Feed do desafio</p>
           <GroupFeed initialRuns={feedRuns} />
         </section>
       </main>

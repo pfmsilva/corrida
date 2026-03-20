@@ -27,14 +27,14 @@ export default async function GroupsPage() {
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="page-header flex items-start justify-between gap-4">
           <div>
-            <h1 className="page-title">Grupos</h1>
-            <p className="page-subtitle">Cria um grupo ou entra num com o ID do grupo.</p>
+            <h1 className="page-title">Desafios</h1>
+            <p className="page-subtitle">Cria um desafio ou entra num com o ID do desafio.</p>
           </div>
           <Link href="/groups/discover"
             className="shrink-0 inline-flex items-center gap-2 text-sm font-semibold
                        text-brand-600 border border-brand-200 bg-brand-50
                        hover:bg-brand-100 px-4 py-2 rounded-xl transition-all duration-200">
-            🌍 Descobrir grupos
+            🌍 Descobrir desafios
           </Link>
         </div>
         <GroupList initialGroups={groups} userId={userId} />

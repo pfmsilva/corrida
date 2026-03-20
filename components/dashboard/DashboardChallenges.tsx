@@ -23,9 +23,9 @@ export default function DashboardChallenges({ challenges }: DashboardChallengesP
     return (
       <div className="rounded-2xl border-2 border-dashed border-gray-200 py-10 text-center">
         <p className="text-3xl mb-2">🏃</p>
-        <p className="font-semibold text-gray-700 text-sm">Ainda não fazes parte de nenhum grupo com desafio</p>
+        <p className="font-semibold text-gray-700 text-sm">Ainda não fazes parte de nenhum desafio</p>
         <Link href="/groups" className="inline-block mt-3 text-sm font-semibold text-brand-600 hover:underline">
-          Explorar grupos →
+          Explorar desafios →
         </Link>
       </div>
     );
