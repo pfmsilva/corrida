@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import RunCard from "./RunCard";
 import RunForm from "./RunForm";
 import type { Run, RunFormValues } from "@/types";
@@ -11,28 +10,30 @@ interface RunListProps {
   userId: string;
 }
 
-export default function RunList({ initialRuns, userId }: RunListProps) {
-  const supabase = createClient();
+export default function RunList({ initialRuns, userId: _userId }: RunListProps) {
   const [runs, setRuns] = useState<Run[]>(initialRuns);
   const [showForm, setShowForm] = useState(false);
 
   const handleAddRun = async (values: RunFormValues) => {
-    const { data, error } = await supabase
-      .from("runs")
-      .insert({
-        user_id: userId,
+    const res = await fetch("/api/runs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         date: values.date,
-        distance_km: parseFloat(values.distance_km),
-        duration_min: parseFloat(values.duration_min),
+        distance_km: values.distance_km,
+        duration_min: values.duration_min,
         notes: values.notes || null,
-      })
-      .select()
-      .single();
+      }),
+    });
 
-    if (error) throw new Error(error.message);
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data?.error ?? "Erro ao registar corrida");
+    }
 
+    const data: Run = await res.json();
     setRuns((prev) =>
-      [data as Run, ...prev].sort(
+      [data, ...prev].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       )
     );
@@ -40,8 +41,10 @@ export default function RunList({ initialRuns, userId }: RunListProps) {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("runs").delete().eq("id", id);
-    if (!error) setRuns((prev) => prev.filter((r) => r.id !== id));
+    const res = await fetch(`/api/runs/${id}`, { method: "DELETE" });
+    if (res.ok || res.status === 204) {
+      setRuns((prev) => prev.filter((r) => r.id !== id));
+    }
   };
 
   return (
