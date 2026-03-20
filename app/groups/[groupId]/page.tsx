@@ -213,7 +213,7 @@ export default async function GroupHubPage({
 
           <section>
             <p className="section-title">Classificação</p>
-            <Leaderboard entries={leaderboard} currentUserId={user.id} />
+            <Leaderboard entries={leaderboard} currentUserId={userId} />
           </section>
         </div>
 
