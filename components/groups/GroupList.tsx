@@ -1,5 +1,4 @@
 "use client";
-// GroupList — renders the user's groups and exposes Create + Join forms.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -18,8 +17,8 @@ export default function GroupList({ initialGroups, userId }: GroupListProps) {
   const [panel, setPanel] = useState<"none" | "create" | "join">("none");
 
   return (
-    <div className="space-y-4">
-      {/* Action buttons */}
+    <div className="space-y-5">
+      {/* Acções */}
       <div className="flex gap-3">
         <button
           onClick={() => setPanel(panel === "create" ? "none" : "create")}
@@ -35,43 +34,50 @@ export default function GroupList({ initialGroups, userId }: GroupListProps) {
         </button>
       </div>
 
-      {/* Inline forms */}
       {panel === "create" && (
         <CreateGroupForm
-          onSuccess={(groupId) => {
-            router.push(`/groups/${groupId}`);
-          }}
+          onSuccess={(id) => router.push(`/groups/${id}`)}
           onCancel={() => setPanel("none")}
         />
       )}
       {panel === "join" && (
         <JoinGroupForm
-          onSuccess={(groupId) => {
-            router.push(`/groups/${groupId}`);
-          }}
+          onSuccess={(id) => router.push(`/groups/${id}`)}
           onCancel={() => setPanel("none")}
         />
       )}
 
-      {/* Group cards */}
       {initialGroups.length === 0 ? (
-        <div className="card text-center py-10 text-gray-400">
-          <p className="text-3xl mb-2">👥</p>
-          <p className="text-sm">Ainda não entraste em nenhum grupo.</p>
+        <div className="rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
+          <p className="text-5xl mb-3">👥</p>
+          <p className="font-semibold text-gray-700">Ainda sem grupos</p>
+          <p className="text-sm text-gray-400 mt-1">Cria ou entra num grupo para começar</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {initialGroups.map((g) => (
             <Link key={g.id} href={`/groups/${g.id}`}>
-              <div className="card hover:border-brand-200 hover:bg-brand-50 transition-colors cursor-pointer">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5
+                              hover:shadow-md hover:border-brand-100 transition-all duration-200
+                              group cursor-pointer">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-gray-900">{g.name}</p>
-                    {g.created_by === userId && (
-                      <p className="text-xs text-brand-500 mt-0.5">Administrador</p>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500
+                                      to-indigo-500 flex items-center justify-center
+                                      text-white font-bold text-sm">
+                        {g.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{g.name}</p>
+                        {g.created_by === userId && (
+                          <p className="text-xs text-brand-500 font-medium">Administrador</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-gray-300 text-lg">→</span>
+                  <span className="text-gray-300 group-hover:text-brand-400
+                                   transition-colors text-lg font-light">→</span>
                 </div>
               </div>
             </Link>

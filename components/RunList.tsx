@@ -1,6 +1,4 @@
 "use client";
-// RunList — manages the list of runs and the "Add run" flow.
-// It holds state locally so inserts/deletes feel instant without a full page reload.
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -15,12 +13,9 @@ interface RunListProps {
 
 export default function RunList({ initialRuns, userId }: RunListProps) {
   const supabase = createClient();
-
-  // Local copy of runs so we can optimistically update without a page refresh
   const [runs, setRuns] = useState<Run[]>(initialRuns);
   const [showForm, setShowForm] = useState(false);
 
-  /** Insert a new run and prepend it to the local list */
   const handleAddRun = async (values: RunFormValues) => {
     const { data, error } = await supabase
       .from("runs")
@@ -36,7 +31,6 @@ export default function RunList({ initialRuns, userId }: RunListProps) {
 
     if (error) throw new Error(error.message);
 
-    // Prepend newest run and close the form
     setRuns((prev) =>
       [data as Run, ...prev].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -45,33 +39,26 @@ export default function RunList({ initialRuns, userId }: RunListProps) {
     setShowForm(false);
   };
 
-  /** Delete a run by id and remove it from local state */
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("runs").delete().eq("id", id);
-    if (!error) {
-      setRuns((prev) => prev.filter((r) => r.id !== id));
-    }
+    if (!error) setRuns((prev) => prev.filter((r) => r.id !== id));
   };
 
   return (
     <div>
-      {/* Show form OR add button */}
       {showForm ? (
         <RunForm onSubmit={handleAddRun} onCancel={() => setShowForm(false)} />
       ) : (
-        <button
-          onClick={() => setShowForm(true)}
-          className="btn-primary w-full mb-4"
-        >
+        <button onClick={() => setShowForm(true)} className="btn-primary w-full mb-5">
           + Registar corrida
         </button>
       )}
 
-      {/* Run cards */}
       {runs.length === 0 ? (
-        <div className="card text-center py-10 text-gray-400">
-          <p className="text-3xl mb-2">👟</p>
-          <p className="text-sm">Ainda sem corridas — regista a primeira!</p>
+        <div className="rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
+          <p className="text-5xl mb-3">👟</p>
+          <p className="font-semibold text-gray-700">Ainda sem corridas</p>
+          <p className="text-sm text-gray-400 mt-1">Regista a tua primeira corrida para começar</p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -1,5 +1,4 @@
 "use client";
-// CreateGroupForm — POST /api/groups, redirects to the new group on success.
 
 import { useState } from "react";
 
@@ -27,43 +26,33 @@ export default function CreateGroupForm({ onSuccess, onCancel }: CreateGroupForm
     const data = await res.json();
     setLoading(false);
 
-    if (!res.ok) {
-      setError(data?.error ?? "Erro ao criar grupo");
-      return;
-    }
-
+    if (!res.ok) { setError(data?.error ?? "Erro ao criar grupo"); return; }
     onSuccess(data.id);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card space-y-4 border-brand-200">
-      <h3 className="font-semibold text-gray-800">Novo grupo</h3>
-
-      <div>
-        <label htmlFor="group-name" className="label">Nome do grupo</label>
-        <input
-          id="group-name"
-          type="text"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="ex: Corredores de Sábado"
-          className="input"
-        />
+    <div className="bg-white rounded-2xl border border-brand-100 shadow-sm overflow-hidden">
+      <div className="bg-gradient-to-r from-brand-600 to-indigo-500 px-5 py-3">
+        <h3 className="font-bold text-white text-sm">Novo grupo</h3>
       </div>
-
-      {error && (
-        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
-      )}
-
-      <div className="flex gap-3">
-        <button type="submit" disabled={loading} className="btn-primary flex-1">
-          {loading ? "A criar…" : "Criar grupo"}
-        </button>
-        <button type="button" onClick={onCancel} className="btn-ghost">
-          Cancelar
-        </button>
-      </div>
-    </form>
+      <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <div>
+          <label htmlFor="group-name" className="label">Nome do grupo</label>
+          <input
+            id="group-name" type="text" required
+            value={name} onChange={(e) => setName(e.target.value)}
+            placeholder="ex: Corredores de Sábado"
+            className="input"
+          />
+        </div>
+        {error && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
+        <div className="flex gap-3">
+          <button type="submit" disabled={loading} className="btn-primary flex-1">
+            {loading ? "A criar…" : "Criar grupo"}
+          </button>
+          <button type="button" onClick={onCancel} className="btn-ghost">Cancelar</button>
+        </div>
+      </form>
+    </div>
   );
 }

@@ -43,17 +43,19 @@ export default async function AdminPage({
     <div className="min-h-screen bg-gray-50">
       <Navbar userEmail={user.email ?? ""} />
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main className="max-w-5xl mx-auto px-4 py-8">
         <Link
           href={`/groups/${groupId}`}
-          className="text-xs text-gray-400 hover:text-brand-600 mb-4 block"
+          className="text-sm text-gray-400 hover:text-brand-600 mb-5 inline-flex
+                     items-center gap-1 font-medium transition-colors"
         >
           ← Voltar a {group.name}
         </Link>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">
-          ⚙️ Administração — {group.name}
-        </h1>
+        <div className="page-header">
+          <h1 className="page-title">⚙️ Administração</h1>
+          <p className="page-subtitle">{group.name}</p>
+        </div>
 
         <AdminPanel
           groupId={groupId}

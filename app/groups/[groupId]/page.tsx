@@ -115,48 +115,50 @@ export default async function GroupHubPage({
     <div className="min-h-screen bg-gray-50">
       <Navbar userEmail={user.email ?? ""} />
 
-      <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-        {/* ── Group header ── */}
-        <div className="flex items-start justify-between">
-          <div>
-            <Link
-              href="/groups"
-              className="text-xs text-gray-400 hover:text-brand-600 mb-1 block"
-            >
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+        {/* ── Group header banner ── */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br
+                        from-indigo-900 via-indigo-700 to-brand-600 p-6 shadow-lg
+                        shadow-indigo-500/20">
+          <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/5" />
+          <div className="absolute right-8 bottom-0 w-20 h-20 rounded-full bg-white/5" />
+
+          <div className="relative z-10">
+            <Link href="/groups"
+              className="text-indigo-200 hover:text-white text-xs font-medium
+                         transition-colors mb-3 inline-flex items-center gap-1">
               ← Todos os grupos
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {(group as Group).name}
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {safeMembers.length} membro
-              {safeMembers.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Share the group ID so others can join */}
-            <button
-              id="copy-group-id"
-              data-group-id={groupId}
-              className="btn-ghost text-xs"
-              onClick={undefined} // handled client-side via inline script below
-            >
-              📋 Copiar ID
-            </button>
-
-            {isAdmin && (
-              <Link
-                href={`/groups/${groupId}/admin`}
-                className="btn-ghost text-xs"
-              >
-                ⚙️ Admin
-              </Link>
-            )}
+            <div className="flex items-start justify-between gap-4 mt-1">
+              <div>
+                <h1 className="text-2xl font-black text-white">{(group as Group).name}</h1>
+                <p className="text-indigo-200 text-sm mt-0.5">
+                  {safeMembers.length} membro{safeMembers.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  id="copy-group-id"
+                  data-group-id={groupId}
+                  className="bg-white/10 hover:bg-white/20 text-white text-xs font-medium
+                             px-3 py-1.5 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                  onClick={undefined}
+                >
+                  📋 Copiar ID
+                </button>
+                {isAdmin && (
+                  <Link href={`/groups/${groupId}/admin`}
+                    className="bg-white/10 hover:bg-white/20 text-white text-xs font-medium
+                               px-3 py-1.5 rounded-lg transition-all duration-200 backdrop-blur-sm">
+                    ⚙️ Admin
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Copy-to-clipboard inline script (avoids a full client component for one button) */}
+        {/* Copy-to-clipboard inline script */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -169,32 +171,27 @@ export default async function GroupHubPage({
           }}
         />
 
-        {/* ── Challenge progress card ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">
-            Desafio do grupo
-          </h2>
-          <ChallengeCard
-            challenge={challenge as GroupChallenge | null}
-            totalKm={totalGroupKm}
-            isAdmin={isAdmin}
-            groupId={groupId}
-          />
-        </section>
+        {/* ── Challenge + Leaderboard side by side on lg ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section>
+            <p className="section-title">Desafio do grupo</p>
+            <ChallengeCard
+              challenge={challenge as GroupChallenge | null}
+              totalKm={totalGroupKm}
+              isAdmin={isAdmin}
+              groupId={groupId}
+            />
+          </section>
 
-        {/* ── Leaderboard ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">
-            Classificação
-          </h2>
-          <Leaderboard entries={leaderboard} currentUserId={user.id} />
-        </section>
+          <section>
+            <p className="section-title">Classificação</p>
+            <Leaderboard entries={leaderboard} currentUserId={user.id} />
+          </section>
+        </div>
 
         {/* ── Group feed ── */}
         <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">
-            Feed do grupo
-          </h2>
+          <p className="section-title">Feed do grupo</p>
           <GroupFeed initialRuns={feedRuns} />
         </section>
       </main>

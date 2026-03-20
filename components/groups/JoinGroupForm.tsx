@@ -1,6 +1,4 @@
 "use client";
-// JoinGroupForm — lets a user join a group by pasting its UUID.
-// The group admin shares the ID via the "Copy ID" button on the group hub.
 
 import { useState } from "react";
 
@@ -28,46 +26,36 @@ export default function JoinGroupForm({ onSuccess, onCancel }: JoinGroupFormProp
     const data = await res.json();
     setLoading(false);
 
-    if (!res.ok) {
-      setError(data?.error ?? "Erro ao entrar no grupo");
-      return;
-    }
-
+    if (!res.ok) { setError(data?.error ?? "Erro ao entrar no grupo"); return; }
     onSuccess(groupId.trim());
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card space-y-4 border-brand-200">
-      <h3 className="font-semibold text-gray-800">Entrar num grupo</h3>
-      <p className="text-sm text-gray-500">
-        Pede ao administrador do grupo que partilhe o ID do grupo e cola-o abaixo.
-      </p>
-
-      <div>
-        <label htmlFor="group-id" className="label">ID do grupo</label>
-        <input
-          id="group-id"
-          type="text"
-          required
-          value={groupId}
-          onChange={(e) => setGroupId(e.target.value)}
-          placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-          className="input font-mono text-xs"
-        />
+    <div className="bg-white rounded-2xl border border-brand-100 shadow-sm overflow-hidden">
+      <div className="bg-gradient-to-r from-indigo-500 to-brand-600 px-5 py-3">
+        <h3 className="font-bold text-white text-sm">Entrar num grupo</h3>
       </div>
-
-      {error && (
-        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
-      )}
-
-      <div className="flex gap-3">
-        <button type="submit" disabled={loading} className="btn-primary flex-1">
-          {loading ? "A entrar…" : "Entrar no grupo"}
-        </button>
-        <button type="button" onClick={onCancel} className="btn-ghost">
-          Cancelar
-        </button>
-      </div>
-    </form>
+      <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <p className="text-sm text-gray-500">
+          Pede ao administrador do grupo que partilhe o ID e cola-o abaixo.
+        </p>
+        <div>
+          <label htmlFor="group-id" className="label">ID do grupo</label>
+          <input
+            id="group-id" type="text" required
+            value={groupId} onChange={(e) => setGroupId(e.target.value)}
+            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            className="input font-mono text-xs"
+          />
+        </div>
+        {error && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
+        <div className="flex gap-3">
+          <button type="submit" disabled={loading} className="btn-primary flex-1">
+            {loading ? "A entrar…" : "Entrar no grupo"}
+          </button>
+          <button type="button" onClick={onCancel} className="btn-ghost">Cancelar</button>
+        </div>
+      </form>
+    </div>
   );
 }
