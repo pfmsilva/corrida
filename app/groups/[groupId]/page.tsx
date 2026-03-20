@@ -68,26 +68,36 @@ export default async function GroupHubPage({
     .eq("group_id", groupId)
     .maybeSingle();
 
-  // ── 4. Fetch all runs for group members ───────────────────────────────
-  // This works because groups_schema.sql added a new RLS policy to `runs`
-  // that allows group members to read each other's runs.
-  const { data: runs } = await supabase
-    .from("runs")
-    .select("*")
-    .in("user_id", memberIds)
-    .order("date", { ascending: false })
-    .limit(200);
-
-  // Only keep runs within the challenge date window AND after the member's joined_at date
   const challengeStart = (challenge as GroupChallenge | null)?.starts_at ?? null;
   const challengeEnd   = (challenge as GroupChallenge | null)?.ends_at   ?? null;
 
+  // ── 4. Fetch runs for group members ──────────────────────────────────
+  // Date bounds are applied at DB level so nunca perdemos corridas por causa do limite.
+  // Lower bound: o mais tardio entre o joined_at de cada membro e o início do desafio.
+  // Para a query usamos o mínimo dos joined_at e o starts_at (pior caso mais antigo),
+  // o filtro fino por membro faz-se no cliente abaixo.
+  const earliestJoinedAt = Object.values(joinedAtMap).sort()[0] ?? null;
+  const dbDateFrom = [earliestJoinedAt, challengeStart]
+    .filter(Boolean)
+    .reduce<string | null>((a, b) => (!a || b! < a ? b : a), null); // mínimo
+
+  let runsQuery = supabase
+    .from("runs")
+    .select("*")
+    .in("user_id", memberIds)
+    .order("date", { ascending: false });
+
+  if (dbDateFrom)  runsQuery = runsQuery.gte("date", dbDateFrom);
+  if (challengeEnd) runsQuery = runsQuery.lte("date", challengeEnd);
+
+  const { data: runs } = await runsQuery;
+
+  // Filtro fino por membro: cada corrida tem de ocorrer após o joined_at do próprio
+  // membro E dentro do período do desafio (starts_at já garante o DB, mas confirmed aqui).
   const safeRuns = (runs ?? []).filter((r) => {
-    const minDate = [joinedAtMap[r.user_id], challengeStart]
-      .filter(Boolean)
-      .reduce<string | null>((a, b) => (!a || b! > a ? b : a), null);
-    if (minDate && r.date < minDate) return false;
-    if (challengeEnd && r.date > challengeEnd) return false;
+    if (joinedAtMap[r.user_id] && r.date < joinedAtMap[r.user_id]) return false;
+    if (challengeStart && r.date < challengeStart) return false;
+    if (challengeEnd   && r.date > challengeEnd)   return false;
     return true;
   });
 
