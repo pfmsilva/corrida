@@ -1,13 +1,14 @@
 // Group hub — the main page for a single group.
 // Shows: challenge progress, leaderboard, and group feed.
 // Server Component: fetches all data and passes to client components.
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import ChallengeCard from "@/components/groups/ChallengeCard";
 import Leaderboard from "@/components/groups/Leaderboard";
 import GroupFeed from "@/components/groups/GroupFeed";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   Group,
   GroupMember,
@@ -22,21 +23,30 @@ export default async function GroupHubPage({
 }: {
   params: Promise<{ groupId: string }>;
 }) {
-  // Next.js 15: params is a Promise — must be awaited
   const { groupId } = await params;
-  const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-  // ── 1. Fetch group + verify membership ────────────────────────────────
+  const supabase = createAdminClient();
+
+  // Verify membership manually (no RLS — admin client)
+  const { data: membership } = await supabase
+    .from("group_members")
+    .select("group_id")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!membership) notFound();
+
+  // ── 1. Fetch group ────────────────────────────────────────────────────
   const { data: group } = await supabase
     .from("groups")
     .select("*")
     .eq("id", groupId)
     .single();
 
-  // RLS returns nothing if the user is not a member
   if (!group) notFound();
 
   // ── 2. Fetch members + their profiles in one query ────────────────────
@@ -127,11 +137,11 @@ export default async function GroupHubPage({
     .sort((a, b) => b.total_km - a.total_km)
     .map((e, i) => ({ ...e, rank: i + 1 }));
 
-  const isAdmin = group.created_by === user.id;
+  const isAdmin = group.created_by === userId;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar userEmail={user.email ?? ""} />
+      <Navbar />
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         {/* ── Group header banner ── */}

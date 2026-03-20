@@ -1,18 +1,18 @@
 // PUT /api/groups/[groupId]/challenge
 // Admin-only: create or update the challenge for a group.
-// Uses upsert so it works whether a challenge already exists or not.
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ groupId: string }> }
 ) {
-  const supabase = await createClient();
-  const { groupId } = await params;
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { groupId } = await params;
+  const supabase = createAdminClient();
 
   // Confirm the current user is the group creator (admin)
   const { data: group } = await supabase
@@ -22,7 +22,7 @@ export async function PUT(
     .single();
 
   if (!group) return NextResponse.json({ error: "Group not found" }, { status: 404 });
-  if (group.created_by !== user.id) {
+  if (group.created_by !== userId) {
     return NextResponse.json({ error: "Only the group admin can set the challenge" }, { status: 403 });
   }
 
@@ -43,7 +43,6 @@ export async function PUT(
     return NextResponse.json({ error: "A data de fim deve ser posterior à data de início" }, { status: 400 });
   }
 
-  // Upsert on group_id (unique constraint guarantees one challenge per group)
   const { data: challenge, error } = await supabase
     .from("group_challenges")
     .upsert(

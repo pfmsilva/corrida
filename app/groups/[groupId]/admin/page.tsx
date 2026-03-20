@@ -1,10 +1,9 @@
-// Admin page — only accessible to the group creator.
-// Allows setting / updating the challenge target and reward.
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import AdminPanel from "@/components/groups/AdminPanel";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { GroupChallenge } from "@/types";
 
 export default async function AdminPage({
@@ -13,12 +12,12 @@ export default async function AdminPage({
   params: Promise<{ groupId: string }>;
 }) {
   const { groupId } = await params;
-  const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-  // Fetch the group — RLS ensures user is a member
+  const supabase = createAdminClient();
+
   const { data: group } = await supabase
     .from("groups")
     .select("id, name, created_by")
@@ -27,12 +26,10 @@ export default async function AdminPage({
 
   if (!group) notFound();
 
-  // Only the creator may access this page
-  if (group.created_by !== user.id) {
+  if (group.created_by !== userId) {
     redirect(`/groups/${groupId}`);
   }
 
-  // Fetch existing challenge (null if not set yet)
   const { data: challenge } = await supabase
     .from("group_challenges")
     .select("*")
@@ -41,7 +38,7 @@ export default async function AdminPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar userEmail={user.email ?? ""} />
+      <Navbar />
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         <Link

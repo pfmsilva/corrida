@@ -1,32 +1,38 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import StatsBar from "@/components/StatsBar";
 import ProgressChart from "@/components/ProgressChart";
 import RunInsights from "@/components/RunInsights";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Run } from "@/types";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const clerkUser = await currentUser();
+  const firstName =
+    clerkUser?.firstName ??
+    clerkUser?.emailAddresses[0]?.emailAddress?.split("@")[0] ??
+    "atleta";
+  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
 
+  const supabase = createAdminClient();
   const { data: runs, error } = await supabase
-    .from("runs").select("*").eq("user_id", user.id)
+    .from("runs")
+    .select("*")
+    .eq("user_id", userId)
     .order("date", { ascending: false });
 
   if (error) console.error("Error fetching runs:", error.message);
 
   const safeRuns: Run[] = runs ?? [];
 
-  const firstName = user.email?.split("@")[0].split(".")[0] ?? "atleta";
-  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar userEmail={user.email ?? ""} />
+      <Navbar />
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
 
@@ -34,7 +40,6 @@ export default async function DashboardPage() {
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br
                         from-brand-600 via-indigo-600 to-indigo-800 p-6 shadow-lg
                         shadow-brand-500/20">
-          {/* Orb decorativo */}
           <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-white/5" />
           <div className="absolute -right-4 bottom-0 w-24 h-24 rounded-full bg-white/5" />
 
