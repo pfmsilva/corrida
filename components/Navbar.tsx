@@ -56,7 +56,7 @@ export default function Navbar() {
               <span className="text-xs text-gray-500 truncate max-w-[140px]">{userEmail}</span>
             </div>
           )}
-          <UserButton afterSignOutUrl="/sign-in" />
+          <UserButton />
         </div>
 
       </div>
