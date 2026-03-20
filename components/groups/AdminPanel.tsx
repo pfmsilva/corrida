@@ -7,10 +7,13 @@ import type { GroupChallenge } from "@/types";
 interface AdminPanelProps {
   groupId: string;
   challenge: GroupChallenge | null;
+  isPublic: boolean;
 }
 
-export default function AdminPanel({ groupId, challenge }: AdminPanelProps) {
+export default function AdminPanel({ groupId, challenge, isPublic: initialIsPublic }: AdminPanelProps) {
   const router = useRouter();
+  const [isPublic, setIsPublic] = useState(initialIsPublic);
+  const [savingVisibility, setSavingVisibility] = useState(false);
   const [targetKm, setTargetKm] = useState(challenge ? String(challenge.target_km) : "");
   const [reward, setReward] = useState(challenge?.reward ?? "");
   const [startsAt, setStartsAt] = useState(challenge?.starts_at ?? "");
@@ -18,6 +21,18 @@ export default function AdminPanel({ groupId, challenge }: AdminPanelProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const handleVisibilityToggle = async (value: boolean) => {
+    setIsPublic(value);
+    setSavingVisibility(true);
+    await fetch(`/api/groups/${groupId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_public: value }),
+    });
+    setSavingVisibility(false);
+    router.refresh();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +60,35 @@ export default function AdminPanel({ groupId, challenge }: AdminPanelProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden max-w-md">
+    <div className="space-y-4 max-w-md">
+
+    {/* ── Visibilidade ── */}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="font-semibold text-gray-900 text-sm">Grupo público</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {isPublic
+              ? "Qualquer utilizador pode encontrar e pedir adesão."
+              : "Só é possível entrar com o ID do grupo."}
+          </p>
+        </div>
+        <button
+          onClick={() => handleVisibilityToggle(!isPublic)}
+          disabled={savingVisibility}
+          className={`relative w-11 h-6 rounded-full transition-colors duration-200
+                      focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+                      ${isPublic ? "bg-brand-600" : "bg-gray-200"}`}
+        >
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full
+                            shadow-sm transition-transform duration-200
+                            ${isPublic ? "translate-x-5" : "translate-x-0"}`} />
+        </button>
+      </div>
+    </div>
+
+    {/* ── Desafio ── */}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="bg-gradient-to-r from-brand-600 to-indigo-500 px-5 py-4">
         <h2 className="font-bold text-white">
           {challenge ? "Atualizar desafio" : "Definir um desafio"}
@@ -118,6 +161,7 @@ export default function AdminPanel({ groupId, challenge }: AdminPanelProps) {
           {loading ? "A guardar…" : challenge ? "Atualizar desafio" : "Definir desafio"}
         </button>
       </form>
+    </div>
     </div>
   );
 }

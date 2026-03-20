@@ -37,6 +37,19 @@ export interface Group {
   name: string;
   created_by: string;
   created_at: string;
+  is_public: boolean;
+}
+
+/** Request to join a public group */
+export interface GroupJoinRequest {
+  id: string;
+  group_id: string;
+  user_id: string;
+  user_name: string;
+  group_name: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  updated_at: string;
 }
 
 /** Membership record — user ↔ group */

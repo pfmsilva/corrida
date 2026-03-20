@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import GroupList from "@/components/groups/GroupList";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -24,9 +25,17 @@ export default async function GroupsPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="max-w-5xl mx-auto px-4 py-8">
-        <div className="page-header">
-          <h1 className="page-title">Grupos</h1>
-          <p className="page-subtitle">Cria um grupo ou entra num com o ID do grupo.</p>
+        <div className="page-header flex items-start justify-between gap-4">
+          <div>
+            <h1 className="page-title">Grupos</h1>
+            <p className="page-subtitle">Cria um grupo ou entra num com o ID do grupo.</p>
+          </div>
+          <Link href="/groups/discover"
+            className="shrink-0 inline-flex items-center gap-2 text-sm font-semibold
+                       text-brand-600 border border-brand-200 bg-brand-50
+                       hover:bg-brand-100 px-4 py-2 rounded-xl transition-all duration-200">
+            🌍 Descobrir grupos
+          </Link>
         </div>
         <GroupList initialGroups={groups} userId={userId} />
       </main>
