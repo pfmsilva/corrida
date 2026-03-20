@@ -18,7 +18,7 @@ export async function createClient() {
           return cookieStore.getAll();
         },
         // Write / refresh session cookies in the response
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: object }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
