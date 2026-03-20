@@ -7,7 +7,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Corrida — Registo de Corridas",
+  title: "4run — Registo de Corridas",
   description: "Regista as tuas corridas, acompanha o ritmo e observa a tua evolução.",
 };
 

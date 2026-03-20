@@ -9,7 +9,7 @@ export default function LoginPage() {
         {/* Brand header */}
         <div className="text-center mb-8">
           <span className="text-4xl">🏃</span>
-          <h1 className="mt-3 text-2xl font-bold text-gray-900">Corrida</h1>
+          <h1 className="mt-3 text-2xl font-bold text-gray-900">4run</h1>
           <p className="mt-1 text-sm text-gray-500">Inicia sessão na tua conta</p>
         </div>
 

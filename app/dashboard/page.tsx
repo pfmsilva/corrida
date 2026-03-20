@@ -4,9 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import StatsBar from "@/components/StatsBar";
-import RunList from "@/components/RunList";
 import ProgressChart from "@/components/ProgressChart";
 import RunInsights from "@/components/RunInsights";
+import Link from "next/link";
 import type { Run } from "@/types";
 
 export default async function DashboardPage() {
@@ -78,13 +78,10 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* ── Run list with inline "Add run" form ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">
-            As tuas corridas
-          </h2>
-          <RunList initialRuns={safeRuns} userId={user.id} />
-        </section>
+        {/* ── Link rápido para registar corrida ── */}
+        <Link href="/runs" className="btn-primary w-full text-center block">
+          + Registar corrida
+        </Link>
       </main>
     </div>
   );

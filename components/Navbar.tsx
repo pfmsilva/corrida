@@ -44,10 +44,11 @@ export default function Navbar({ userEmail }: NavbarProps) {
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="text-xl">🏃</span>
-            <span className="font-bold text-gray-900">Corrida</span>
+            <span className="font-bold text-gray-900">4run</span>
           </Link>
           <nav className="flex items-center gap-1">
             {navLink("/dashboard", "Dashboard")}
+            {navLink("/runs", "Corridas")}
             {navLink("/groups", "Grupos")}
           </nav>
         </div>
