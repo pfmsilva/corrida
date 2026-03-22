@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function DELETE(
@@ -24,6 +25,10 @@ export async function DELETE(
 
   const { error } = await supabase.from("runs").delete().eq("id", runId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Invalidate group pages so feed + leaderboard reflect the deletion immediately
+  revalidatePath("/groups", "layout");
+  revalidatePath("/dashboard");
 
   return new NextResponse(null, { status: 204 });
 }

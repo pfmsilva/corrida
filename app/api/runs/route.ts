@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
@@ -27,6 +28,10 @@ export async function POST(request: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Invalidate group pages so feed + leaderboard reflect the new run immediately
+  revalidatePath("/groups", "layout");
+  revalidatePath("/dashboard");
 
   return NextResponse.json(data, { status: 201 });
 }
