@@ -1,13 +1,14 @@
 // Group hub — the main page for a single group.
 // Shows: challenge progress, leaderboard, and group feed.
 // Server Component: fetches all data and passes to client components.
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import ChallengeCard from "@/components/groups/ChallengeCard";
 import Leaderboard from "@/components/groups/Leaderboard";
 import GroupFeed from "@/components/groups/GroupFeed";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   Group,
   GroupMember,
@@ -22,43 +23,63 @@ export default async function GroupHubPage({
 }: {
   params: Promise<{ groupId: string }>;
 }) {
-  // Next.js 15: params is a Promise — must be awaited
   const { groupId } = await params;
-  const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-  // ── 1. Fetch group + verify membership ────────────────────────────────
+  const supabase = createAdminClient();
+
+  // Verify membership manually (no RLS — admin client)
+  const { data: membership } = await supabase
+    .from("group_members")
+    .select("group_id")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!membership) notFound();
+
+  // ── 1. Fetch group ────────────────────────────────────────────────────
   const { data: group } = await supabase
     .from("groups")
     .select("*")
     .eq("id", groupId)
     .single();
 
-  // RLS returns nothing if the user is not a member
   if (!group) notFound();
 
-  // ── 2. Fetch members + their profiles in one query ────────────────────
+  // ── 2. Fetch members ──────────────────────────────────────────────────
   const { data: members } = await supabase
     .from("group_members")
-    .select("*, profiles(display_name)")
+    .select("*")
     .eq("group_id", groupId)
     .order("joined_at", { ascending: true });
 
-  const safeMembers = (members ?? []) as (GroupMember & {
-    profiles: Pick<Profile, "display_name"> | null;
-  })[];
-
+  const safeMembers = (members ?? []) as GroupMember[];
   const memberIds = safeMembers.map((m) => m.user_id);
+
+  // Fetch profiles separately (FK was removed during Clerk migration so
+  // PostgREST cannot resolve the relationship via the join shorthand)
+  const { data: profileRows } = memberIds.length > 0
+    ? await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", memberIds)
+    : { data: [] as Pick<Profile, "id" | "display_name">[] };
 
   // Map user_id → display_name for quick lookup
   const profileMap: Record<string, string> = {};
+  for (const p of (profileRows ?? [])) {
+    profileMap[p.id] = p.display_name;
+  }
+
   // Map user_id → joined_at date string (YYYY-MM-DD) for run filtering
   const joinedAtMap: Record<string, string> = {};
   for (const m of safeMembers) {
-    profileMap[m.user_id] = m.profiles?.display_name ?? m.user_id.slice(0, 8);
     joinedAtMap[m.user_id] = m.joined_at.slice(0, 10);
+    // Fall back to user_id prefix if no profile found
+    if (!profileMap[m.user_id]) profileMap[m.user_id] = m.user_id.slice(0, 8);
   }
 
   // ── 3. Fetch group challenge ──────────────────────────────────────────
@@ -68,20 +89,36 @@ export default async function GroupHubPage({
     .eq("group_id", groupId)
     .maybeSingle();
 
-  // ── 4. Fetch all runs for group members ───────────────────────────────
-  // This works because groups_schema.sql added a new RLS policy to `runs`
-  // that allows group members to read each other's runs.
-  const { data: runs } = await supabase
+  const challengeStart = (challenge as GroupChallenge | null)?.starts_at ?? null;
+  const challengeEnd   = (challenge as GroupChallenge | null)?.ends_at   ?? null;
+
+  // ── 4. Fetch runs for group members ──────────────────────────────────
+  // A DB filtra apenas pelo período do desafio (se definido).
+  // O filtro joined_at por membro é feito em JS abaixo para não excluir
+  // corridas do admin que podem ser anteriores à criação do grupo.
+  let runsQuery = supabase
     .from("runs")
     .select("*")
     .in("user_id", memberIds)
-    .order("date", { ascending: false })
-    .limit(200);
+    .order("date", { ascending: false });
 
-  // Only keep runs made on or after the member's joined_at date
-  const safeRuns = (runs ?? []).filter(
-    (r) => !joinedAtMap[r.user_id] || r.date >= joinedAtMap[r.user_id]
-  );
+  if (challengeStart) runsQuery = runsQuery.gte("date", challengeStart);
+  if (challengeEnd)   runsQuery = runsQuery.lte("date", challengeEnd);
+
+  const { data: runs } = await runsQuery;
+
+  // Filtro fino por membro: cada corrida tem de ocorrer dentro do período do desafio.
+  // Para membros normais, também tem de ser após o joined_at (não contam corridas anteriores
+  // à adesão). O admin/criador é excluído desse filtro — as suas corridas contam desde o
+  // starts_at do desafio, independentemente de quando criou o grupo.
+  const adminId = group.created_by as string;
+  const safeRuns = (runs ?? []).filter((r) => {
+    const isMemberAdmin = r.user_id === adminId;
+    if (!isMemberAdmin && joinedAtMap[r.user_id] && r.date < joinedAtMap[r.user_id]) return false;
+    if (challengeStart && r.date < challengeStart) return false;
+    if (challengeEnd   && r.date > challengeEnd)   return false;
+    return true;
+  });
 
   // ── 5. Build feed (runs + display name) ──────────────────────────────
   const feedRuns: FeedRun[] = safeRuns.slice(0, 50).map((r) => ({
@@ -109,11 +146,11 @@ export default async function GroupHubPage({
     .sort((a, b) => b.total_km - a.total_km)
     .map((e, i) => ({ ...e, rank: i + 1 }));
 
-  const isAdmin = group.created_by === user.id;
+  const isAdmin = group.created_by === userId;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar userEmail={user.email ?? ""} />
+      <Navbar />
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         {/* ── Group header banner ── */}
@@ -127,7 +164,7 @@ export default async function GroupHubPage({
             <Link href="/groups"
               className="text-indigo-200 hover:text-white text-xs font-medium
                          transition-colors mb-3 inline-flex items-center gap-1">
-              ← Todos os grupos
+              ← Todos os desafios
             </Link>
             <div className="flex items-start justify-between gap-4 mt-1">
               <div>
@@ -174,7 +211,7 @@ export default async function GroupHubPage({
         {/* ── Challenge + Leaderboard side by side on lg ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section>
-            <p className="section-title">Desafio do grupo</p>
+            <p className="section-title">Desafio</p>
             <ChallengeCard
               challenge={challenge as GroupChallenge | null}
               totalKm={totalGroupKm}
@@ -185,13 +222,13 @@ export default async function GroupHubPage({
 
           <section>
             <p className="section-title">Classificação</p>
-            <Leaderboard entries={leaderboard} currentUserId={user.id} />
+            <Leaderboard entries={leaderboard} currentUserId={userId} />
           </section>
         </div>
 
         {/* ── Group feed ── */}
         <section>
-          <p className="section-title">Feed do grupo</p>
+          <p className="section-title">Feed do desafio</p>
           <GroupFeed initialRuns={feedRuns} />
         </section>
       </main>

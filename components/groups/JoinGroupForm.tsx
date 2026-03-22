@@ -33,14 +33,14 @@ export default function JoinGroupForm({ onSuccess, onCancel }: JoinGroupFormProp
   return (
     <div className="bg-white rounded-2xl border border-brand-100 shadow-sm overflow-hidden">
       <div className="bg-gradient-to-r from-indigo-500 to-brand-600 px-5 py-3">
-        <h3 className="font-bold text-white text-sm">Entrar num grupo</h3>
+        <h3 className="font-bold text-white text-sm">Entrar num desafio</h3>
       </div>
       <form onSubmit={handleSubmit} className="p-5 space-y-4">
         <p className="text-sm text-gray-500">
-          Pede ao administrador do grupo que partilhe o ID e cola-o abaixo.
+          Pede ao administrador do desafio que partilhe o ID e cola-o abaixo.
         </p>
         <div>
-          <label htmlFor="group-id" className="label">ID do grupo</label>
+          <label htmlFor="group-id" className="label">ID do desafio</label>
           <input
             id="group-id" type="text" required
             value={groupId} onChange={(e) => setGroupId(e.target.value)}
@@ -51,7 +51,7 @@ export default function JoinGroupForm({ onSuccess, onCancel }: JoinGroupFormProp
         {error && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
         <div className="flex gap-3">
           <button type="submit" disabled={loading} className="btn-primary flex-1">
-            {loading ? "A entrar…" : "Entrar no grupo"}
+            {loading ? "A entrar…" : "Entrar no desafio"}
           </button>
           <button type="button" onClick={onCancel} className="btn-ghost">Cancelar</button>
         </div>

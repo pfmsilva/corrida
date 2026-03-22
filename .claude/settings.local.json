@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Skill(claude-api)",
+      "Bash(claude install:*)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\bpu059854\\\\Desktop\\\\Cursor\\\\Corrida\\\\app\\\\sign-in\\\\[[...sign-in]]\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\bpu059854\\\\Desktop\\\\Cursor\\\\Corrida\\\\app\\\\sign-up\\\\[[...sign-up]]\")",
+      "Bash(cd:*)"
     ]
   }
 }

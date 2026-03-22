@@ -22,7 +22,7 @@ export default function GroupFeed({ initialRuns }: { initialRuns: FeedRun[] }) {
     return (
       <div className="rounded-2xl border-2 border-dashed border-gray-200 py-14 text-center">
         <p className="text-4xl mb-3">👟</p>
-        <p className="font-semibold text-gray-700">Ainda sem corridas no grupo</p>
+        <p className="font-semibold text-gray-700">Ainda sem corridas no desafio</p>
         <p className="text-sm text-gray-400 mt-1">Regista uma corrida para aparecer aqui</p>
       </div>
     );

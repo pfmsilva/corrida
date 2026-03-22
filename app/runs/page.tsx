@@ -1,17 +1,24 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import RunList from "@/components/RunList";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Run } from "@/types";
 
-export default async function RunsPage() {
-  const supabase = await createClient();
+export default async function RunsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ new?: string }>;
+}) {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  const { new: openNew } = await searchParams;
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
+  const supabase = createAdminClient();
   const { data: runs, error } = await supabase
-    .from("runs").select("*").eq("user_id", user.id)
+    .from("runs")
+    .select("*")
+    .eq("user_id", userId)
     .order("date", { ascending: false });
 
   if (error) console.error("Error fetching runs:", error.message);
@@ -20,7 +27,7 @@ export default async function RunsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar userEmail={user.email ?? ""} />
+      <Navbar />
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="page-header flex items-end justify-between">
@@ -34,7 +41,7 @@ export default async function RunsPage() {
           </div>
         </div>
 
-        <RunList initialRuns={safeRuns} userId={user.id} />
+        <RunList initialRuns={safeRuns} userId={userId} defaultShowForm={openNew === "1"} />
       </main>
     </div>
   );

@@ -1,11 +1,13 @@
-// Admin page — only accessible to the group creator.
-// Allows setting / updating the challenge target and reward.
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import AdminPanel from "@/components/groups/AdminPanel";
-import type { GroupChallenge } from "@/types";
+import InviteUserForm from "@/components/groups/InviteUserForm";
+import GroupInvitationsAdmin from "@/components/groups/GroupInvitationsAdmin";
+import GroupJoinRequestsAdmin from "@/components/groups/GroupJoinRequestsAdmin";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { GroupChallenge, GroupInvitation, GroupJoinRequest } from "@/types";
 
 export default async function AdminPage({
   params,
@@ -13,42 +15,34 @@ export default async function AdminPage({
   params: Promise<{ groupId: string }>;
 }) {
   const { groupId } = await params;
-  const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-  // Fetch the group — RLS ensures user is a member
+  const supabase = createAdminClient();
+
   const { data: group } = await supabase
-    .from("groups")
-    .select("id, name, created_by")
-    .eq("id", groupId)
-    .single();
+    .from("groups").select("id, name, created_by, is_public").eq("id", groupId).single();
 
   if (!group) notFound();
+  if (group.created_by !== userId) redirect(`/groups/${groupId}`);
 
-  // Only the creator may access this page
-  if (group.created_by !== user.id) {
-    redirect(`/groups/${groupId}`);
-  }
-
-  // Fetch existing challenge (null if not set yet)
-  const { data: challenge } = await supabase
-    .from("group_challenges")
-    .select("*")
-    .eq("group_id", groupId)
-    .maybeSingle();
+  const [{ data: challenge }, { data: invitations }, { data: joinRequests }] = await Promise.all([
+    supabase.from("group_challenges").select("*").eq("group_id", groupId).maybeSingle(),
+    supabase.from("group_invitations").select("*")
+      .eq("group_id", groupId).order("created_at", { ascending: false }),
+    supabase.from("group_join_requests").select("*")
+      .eq("group_id", groupId).order("created_at", { ascending: false }),
+  ]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar userEmail={user.email ?? ""} />
+      <Navbar />
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <Link
-          href={`/groups/${groupId}`}
-          className="text-sm text-gray-400 hover:text-brand-600 mb-5 inline-flex
-                     items-center gap-1 font-medium transition-colors"
-        >
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+        <Link href={`/groups/${groupId}`}
+          className="text-sm text-gray-400 hover:text-brand-600 inline-flex
+                     items-center gap-1 font-medium transition-colors">
           ← Voltar a {group.name}
         </Link>
 
@@ -57,10 +51,20 @@ export default async function AdminPage({
           <p className="page-subtitle">{group.name}</p>
         </div>
 
-        <AdminPanel
-          groupId={groupId}
-          challenge={challenge as GroupChallenge | null}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <div className="space-y-6">
+            <AdminPanel
+              groupId={groupId}
+              challenge={challenge as GroupChallenge | null}
+              isPublic={group.is_public ?? false}
+            />
+            <InviteUserForm groupId={groupId} />
+          </div>
+          <div className="space-y-6">
+            <GroupJoinRequestsAdmin requests={(joinRequests ?? []) as GroupJoinRequest[]} />
+            <GroupInvitationsAdmin invitations={(invitations ?? []) as GroupInvitation[]} />
+          </div>
+        </div>
       </main>
     </div>
   );
