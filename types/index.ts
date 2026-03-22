@@ -69,6 +69,7 @@ export interface GroupChallenge {
   reward: string;
   starts_at: string | null; // ISO date "YYYY-MM-DD"
   ends_at: string | null;   // ISO date "YYYY-MM-DD"
+  image_url: string | null; // Supabase Storage public URL
   updated_at: string;
 }
 

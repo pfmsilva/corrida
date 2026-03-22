@@ -26,11 +26,12 @@ export async function PUT(
     return NextResponse.json({ error: "Only the group admin can set the challenge" }, { status: 403 });
   }
 
-  const { target_km, reward, starts_at, ends_at } = await request.json() as {
+  const { target_km, reward, starts_at, ends_at, image_url } = await request.json() as {
     target_km: number;
     reward: string;
     starts_at: string | null;
     ends_at: string | null;
+    image_url?: string | null;
   };
 
   if (!target_km || target_km <= 0) {
@@ -46,7 +47,14 @@ export async function PUT(
   const { data: challenge, error } = await supabase
     .from("group_challenges")
     .upsert(
-      { group_id: groupId, target_km, reward: reward.trim(), starts_at: starts_at ?? null, ends_at: ends_at ?? null },
+      {
+        group_id: groupId,
+        target_km,
+        reward: reward.trim(),
+        starts_at: starts_at ?? null,
+        ends_at: ends_at ?? null,
+        ...(image_url !== undefined ? { image_url: image_url ?? null } : {}),
+      },
       { onConflict: "group_id" }
     )
     .select()
