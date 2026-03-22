@@ -49,26 +49,37 @@ export default async function GroupHubPage({
 
   if (!group) notFound();
 
-  // ── 2. Fetch members + their profiles in one query ────────────────────
+  // ── 2. Fetch members ──────────────────────────────────────────────────
   const { data: members } = await supabase
     .from("group_members")
-    .select("*, profiles(display_name)")
+    .select("*")
     .eq("group_id", groupId)
     .order("joined_at", { ascending: true });
 
-  const safeMembers = (members ?? []) as (GroupMember & {
-    profiles: Pick<Profile, "display_name"> | null;
-  })[];
-
+  const safeMembers = (members ?? []) as GroupMember[];
   const memberIds = safeMembers.map((m) => m.user_id);
+
+  // Fetch profiles separately (FK was removed during Clerk migration so
+  // PostgREST cannot resolve the relationship via the join shorthand)
+  const { data: profileRows } = memberIds.length > 0
+    ? await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", memberIds)
+    : { data: [] as Pick<Profile, "id" | "display_name">[] };
 
   // Map user_id → display_name for quick lookup
   const profileMap: Record<string, string> = {};
+  for (const p of (profileRows ?? [])) {
+    profileMap[p.id] = p.display_name;
+  }
+
   // Map user_id → joined_at date string (YYYY-MM-DD) for run filtering
   const joinedAtMap: Record<string, string> = {};
   for (const m of safeMembers) {
-    profileMap[m.user_id] = m.profiles?.display_name ?? m.user_id.slice(0, 8);
     joinedAtMap[m.user_id] = m.joined_at.slice(0, 10);
+    // Fall back to user_id prefix if no profile found
+    if (!profileMap[m.user_id]) profileMap[m.user_id] = m.user_id.slice(0, 8);
   }
 
   // ── 3. Fetch group challenge ──────────────────────────────────────────
