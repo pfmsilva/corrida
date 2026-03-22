@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { name } = await request.json() as { name: string };
+  const { name, is_public } = await request.json() as { name: string; is_public?: boolean };
   if (!name?.trim()) {
     return NextResponse.json({ error: "Group name is required" }, { status: 400 });
   }
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   // 1. Create the group
   const { data: group, error: groupError } = await supabase
     .from("groups")
-    .insert({ name: name.trim(), created_by: userId })
+    .insert({ name: name.trim(), created_by: userId, is_public: is_public ?? false })
     .select()
     .single();
 
