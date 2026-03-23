@@ -9,6 +9,7 @@ import ChallengeCard from "@/components/groups/ChallengeCard";
 import Leaderboard from "@/components/groups/Leaderboard";
 import GroupFeed from "@/components/groups/GroupFeed";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { computeBadges, computeStreak } from "@/lib/gamification";
 import type {
   Group,
   GroupMember,
@@ -132,7 +133,8 @@ export default async function GroupHubPage({
     0
   );
 
-  const leaderboard: LeaderboardEntry[] = memberIds
+  // Sort by total distance first, then enrich with badges and streak
+  const sorted = memberIds
     .map((uid) => {
       const userRuns = safeRuns.filter((r) => r.user_id === uid);
       return {
@@ -140,11 +142,20 @@ export default async function GroupHubPage({
         display_name: profileMap[uid] ?? "Desconhecido",
         total_km: userRuns.reduce((s, r) => s + Number(r.distance_km), 0),
         run_count: userRuns.length,
-        rank: 0, // assigned below after sort
+        userRuns,
       };
     })
-    .sort((a, b) => b.total_km - a.total_km)
-    .map((e, i) => ({ ...e, rank: i + 1 }));
+    .sort((a, b) => b.total_km - a.total_km);
+
+  const leaderboard: LeaderboardEntry[] = sorted.map((e, i) => ({
+    user_id: e.user_id,
+    display_name: e.display_name,
+    total_km: e.total_km,
+    run_count: e.run_count,
+    rank: i + 1,
+    badges: computeBadges(e.userRuns, i === 0),
+    streak: computeStreak(e.userRuns),
+  }));
 
   const isAdmin = group.created_by === userId;
 
@@ -222,7 +233,7 @@ export default async function GroupHubPage({
 
           <section>
             <p className="section-title">Classificação</p>
-            <Leaderboard entries={leaderboard} currentUserId={userId} />
+            <Leaderboard entries={leaderboard} currentUserId={userId} groupId={groupId} />
           </section>
         </div>
 

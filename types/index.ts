@@ -91,6 +91,16 @@ export interface GroupInvitation {
   updated_at: string;
 }
 
+// ── Gamification ───────────────────────────────────────────────────────────
+
+/** A badge awarded to a user for an achievement */
+export interface Badge {
+  id: "first_run" | "weekly_10k" | "top_runner";
+  emoji: string;
+  label: string;
+  description: string;
+}
+
 /** In-app notification (new run, overtake, goal milestone) */
 export interface AppNotification {
   id: string;
@@ -117,4 +127,6 @@ export interface LeaderboardEntry {
   total_km: number;
   run_count: number;
   rank: number;
+  badges: Badge[];   // earned gamification badges
+  streak: number;    // consecutive running days (0 = no active streak)
 }
