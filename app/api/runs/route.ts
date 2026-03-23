@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { triggerRunNotifications } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -32,6 +33,14 @@ export async function POST(request: Request) {
   // Invalidate group pages so feed + leaderboard reflect the new run immediately
   revalidatePath("/groups", "layout");
   revalidatePath("/dashboard");
+
+  // Fire notifications (non-blocking — errors don't affect the run response)
+  triggerRunNotifications(
+    userId,
+    parseFloat(distance_km),
+    date,
+    supabase
+  ).catch((e) => console.error("[notifications] trigger error:", e));
 
   return NextResponse.json(data, { status: 201 });
 }

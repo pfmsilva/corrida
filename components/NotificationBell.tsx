@@ -2,27 +2,61 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { GroupInvitation, GroupJoinRequest } from "@/types";
+import Link from "next/link";
+import type { GroupInvitation, GroupJoinRequest, AppNotification } from "@/types";
+
+const NOTIF_ICON: Record<AppNotification["type"], string> = {
+  new_run: "🏃",
+  overtake: "⚡",
+  goal_80: "🎯",
+  goal_90: "🏆",
+};
+
+const NOTIF_LABEL: Record<AppNotification["type"], string> = {
+  new_run: "Nova corrida",
+  overtake: "Ultrapassagem",
+  goal_80: "80% da meta!",
+  goal_90: "90% da meta!",
+};
+
+const NOTIF_COLOR: Record<AppNotification["type"], string> = {
+  new_run: "text-brand-500",
+  overtake: "text-orange-500",
+  goal_80: "text-emerald-500",
+  goal_90: "text-emerald-600",
+};
+
+function timeAgo(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60) return "agora mesmo";
+  if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `há ${Math.floor(diff / 3600)} h`;
+  return `há ${Math.floor(diff / 86400)} d`;
+}
 
 export default function NotificationBell() {
   const router = useRouter();
   const [invitations, setInvitations] = useState<GroupInvitation[]>([]);
   const [joinRequests, setJoinRequests] = useState<GroupJoinRequest[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [open, setOpen] = useState(false);
   const [responding, setResponding] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const fetchAll = useCallback(async () => {
-    const [invRes, reqRes] = await Promise.all([
+    const [invRes, reqRes, notifRes] = await Promise.all([
       fetch("/api/invitations"),
       fetch("/api/join-requests"),
+      fetch("/api/notifications"),
     ]);
     if (invRes.ok) setInvitations(await invRes.json());
     if (reqRes.ok) setJoinRequests(await reqRes.json());
+    if (notifRes.ok) setNotifications(await notifRes.json());
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -30,6 +64,19 @@ export default function NotificationBell() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const handleOpen = async () => {
+    const next = !open;
+    setOpen(next);
+    if (next) {
+      // Mark all notifications as read in the background
+      const unread = notifications.filter((n) => !n.is_read);
+      if (unread.length) {
+        fetch("/api/notifications", { method: "PATCH" });
+        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      }
+    }
+  };
 
   const respondInvite = async (id: string, status: "accepted" | "declined") => {
     setResponding(id);
@@ -55,12 +102,14 @@ export default function NotificationBell() {
     if (status === "approved") router.refresh();
   };
 
-  const count = invitations.length + joinRequests.length;
+  const unreadNotifCount = notifications.filter((n) => !n.is_read).length;
+  const count = invitations.length + joinRequests.length + unreadNotifCount;
+  const hasAny = invitations.length > 0 || joinRequests.length > 0 || notifications.length > 0;
 
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleOpen}
         className="relative flex items-center justify-center
                    w-9 h-9 rounded-xl text-gray-500 hover:text-gray-900
                    hover:bg-gray-100 transition-all duration-200"
@@ -85,19 +134,22 @@ export default function NotificationBell() {
         <div className="absolute right-0 top-full mt-2 w-80
                         bg-white rounded-2xl shadow-xl border border-gray-100
                         overflow-hidden z-50 animate-fade-in-up">
-          <div className="px-4 py-3 border-b border-gray-50">
+          <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
             <p className="text-sm font-semibold text-gray-900">Notificações</p>
+            {count > 0 && (
+              <span className="text-xs text-gray-400">{count} nova{count !== 1 ? "s" : ""}</span>
+            )}
           </div>
 
-          {count === 0 ? (
+          {!hasAny ? (
             <div className="px-4 py-8 text-center">
               <p className="text-2xl mb-2">🔔</p>
               <p className="text-sm text-gray-400">Sem notificações</p>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-50 max-h-[420px] overflow-y-auto">
+            <ul className="divide-y divide-gray-50 max-h-[480px] overflow-y-auto">
 
-              {/* Convites para o utilizador */}
+              {/* ── Convites ────────────────────────────────────────── */}
               {invitations.map((inv) => (
                 <li key={inv.id} className="px-4 py-4 space-y-3">
                   <div>
@@ -133,7 +185,7 @@ export default function NotificationBell() {
                 </li>
               ))}
 
-              {/* Pedidos de adesão para o admin */}
+              {/* ── Pedidos de adesão ────────────────────────────────── */}
               {joinRequests.map((req) => (
                 <li key={req.id} className="px-4 py-4 space-y-3">
                   <div>
@@ -170,10 +222,48 @@ export default function NotificationBell() {
                 </li>
               ))}
 
+              {/* ── Notificações de atividade ─────────────────────────── */}
+              {notifications.map((notif) => (
+                <li
+                  key={notif.id}
+                  className={`px-4 py-3 transition-colors
+                    ${notif.is_read ? "bg-white" : "bg-brand-50/40"}`}
+                >
+                  {notif.group_id ? (
+                    <Link
+                      href={`/groups/${notif.group_id}`}
+                      onClick={() => setOpen(false)}
+                      className="flex gap-3 items-start group"
+                    >
+                      <NotifContent notif={notif} />
+                    </Link>
+                  ) : (
+                    <div className="flex gap-3 items-start">
+                      <NotifContent notif={notif} />
+                    </div>
+                  )}
+                </li>
+              ))}
+
             </ul>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+function NotifContent({ notif }: { notif: AppNotification }) {
+  return (
+    <>
+      <span className="text-xl shrink-0 mt-0.5">{NOTIF_ICON[notif.type]}</span>
+      <div className="min-w-0">
+        <p className={`text-xs font-semibold uppercase tracking-wider mb-0.5 ${NOTIF_COLOR[notif.type]}`}>
+          {NOTIF_LABEL[notif.type]}
+        </p>
+        <p className="text-sm text-gray-800 leading-snug">{notif.message}</p>
+        <p className="text-xs text-gray-400 mt-1">{timeAgo(notif.created_at)}</p>
+      </div>
+    </>
   );
 }

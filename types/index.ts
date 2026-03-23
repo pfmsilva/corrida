@@ -91,6 +91,18 @@ export interface GroupInvitation {
   updated_at: string;
 }
 
+/** In-app notification (new run, overtake, goal milestone) */
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: "new_run" | "overtake" | "goal_80" | "goal_90";
+  group_id: string | null;
+  message: string;
+  is_read: boolean;
+  data: Record<string, unknown> | null;
+  created_at: string;
+}
+
 /** User result from search */
 export interface UserSearchResult {
   id: string;
