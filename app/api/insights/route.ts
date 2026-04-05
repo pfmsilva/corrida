@@ -3,7 +3,7 @@
 // powered by claude-opus-4-6 with adaptive thinking.
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import type { Run } from "@/types";
 
 // Initialise the Anthropic client once (reused across requests in the same worker)
@@ -21,13 +21,8 @@ export async function POST(request: Request) {
     );
   }
 
-  // Verify the caller is an authenticated user before hitting the AI API
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  const { userId } = await auth();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

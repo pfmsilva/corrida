@@ -1,0 +1,46 @@
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { triggerRunNotifications } from "@/lib/notifications";
+
+export async function POST(request: Request) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await request.json();
+  const { date, distance_km, duration_min, notes } = body;
+
+  if (!date || !distance_km || !duration_min) {
+    return NextResponse.json({ error: "Campos obrigatórios em falta" }, { status: 400 });
+  }
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("runs")
+    .insert({
+      user_id: userId,
+      date,
+      distance_km: parseFloat(distance_km),
+      duration_min: parseFloat(duration_min),
+      notes: notes || null,
+    })
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Invalidate group pages so feed + leaderboard reflect the new run immediately
+  revalidatePath("/groups", "layout");
+  revalidatePath("/dashboard");
+
+  // Fire notifications (non-blocking — errors don't affect the run response)
+  triggerRunNotifications(
+    userId,
+    parseFloat(distance_km),
+    date,
+    supabase
+  ).catch((e) => console.error("[notifications] trigger error:", e));
+
+  return NextResponse.json(data, { status: 201 });
+}

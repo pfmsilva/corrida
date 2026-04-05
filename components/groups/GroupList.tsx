@@ -24,7 +24,7 @@ export default function GroupList({ initialGroups, userId }: GroupListProps) {
           onClick={() => setPanel(panel === "create" ? "none" : "create")}
           className="btn-primary"
         >
-          + Criar grupo
+          + Criar desafio
         </button>
         <button
           onClick={() => setPanel(panel === "join" ? "none" : "join")}
@@ -50,8 +50,8 @@ export default function GroupList({ initialGroups, userId }: GroupListProps) {
       {initialGroups.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
           <p className="text-5xl mb-3">👥</p>
-          <p className="font-semibold text-gray-700">Ainda sem grupos</p>
-          <p className="text-sm text-gray-400 mt-1">Cria ou entra num grupo para começar</p>
+          <p className="font-semibold text-gray-700">Ainda sem desafios</p>
+          <p className="text-sm text-gray-400 mt-1">Cria ou entra num desafio para começar</p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
