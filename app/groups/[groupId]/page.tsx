@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import ChallengeCard from "@/components/groups/ChallengeCard";
 import Leaderboard from "@/components/groups/Leaderboard";
 import GroupFeed from "@/components/groups/GroupFeed";
+import ParticipantList from "@/components/groups/ParticipantList";
 import type {
   Group,
   GroupMember,
@@ -16,6 +17,7 @@ import type {
   LeaderboardEntry,
   Profile,
 } from "@/types";
+import type { ParticipantInfo } from "@/components/groups/ParticipantList";
 
 export default async function GroupHubPage({
   params,
@@ -111,6 +113,12 @@ export default async function GroupHubPage({
 
   const isAdmin = group.created_by === user.id;
 
+  const participants: ParticipantInfo[] = safeMembers.map((m) => ({
+    user_id: m.user_id,
+    display_name: profileMap[m.user_id] ?? "Desconhecido",
+    joined_at: m.joined_at,
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar userEmail={user.email ?? ""} />
@@ -188,6 +196,14 @@ export default async function GroupHubPage({
             <Leaderboard entries={leaderboard} currentUserId={user.id} />
           </section>
         </div>
+
+        {/* ── Participants ── */}
+        <section>
+          <p className="section-title">
+            Participantes ({participants.length})
+          </p>
+          <ParticipantList participants={participants} currentUserId={user.id} />
+        </section>
 
         {/* ── Group feed ── */}
         <section>
